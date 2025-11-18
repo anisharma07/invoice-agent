@@ -367,3 +367,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Made with ❤️ by the Strk-Invoice-AI Team**
 
 For detailed setup instructions, see [QUICKSTART.md](docs/QUICKSTART.md) or [DOCKER_QUICKSTART.md](DOCKER_QUICKSTART.md)
+# invoice-agent
