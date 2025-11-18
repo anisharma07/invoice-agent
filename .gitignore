@@ -1,0 +1,501 @@
+# ===================================
+# SECRETS & CREDENTIALS (CRITICAL!)
+# ===================================
+# Environment variables (but allow .env.example)
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+.env.*.local
+
+# Allow .env.example files to be committed
+!.env.example
+!**/.env.example
+
+# AWS credentials
+.aws/
+aws-credentials.json
+credentials.json
+*credentials*.json
+*.pem
+*.key
+*.crt
+*.cer
+
+# API Keys and Secrets
+*secret*
+*token*
+*api-key*
+*api_key*
+*apikey*
+*.secret
+secrets/
+secret.yaml
+secret.yml
+secrets.yaml
+secrets.yml
+
+# SSH Keys
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+*.ppk
+
+# ===================================
+# PYTHON
+# ===================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+pytestdebug.log
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# ===================================
+# VIRTUAL ENVIRONMENTS
+# ===================================
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv
+.virtualenv
+virtualenv/
+
+# ===================================
+# NODE / NPM / YARN
+# ===================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache
+.cache
+.parcel-cache
+
+# Next.js
+.next/
+out/
+
+# Nuxt.js
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# vuepress
+.vuepress/dist
+
+# Serverless directories
+.serverless/
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# ===================================
+# DOCKER & CONTAINERS
+# ===================================
+# Docker override files (local configurations)
+docker-compose.override.yml
+docker-compose.local.yml
+docker-compose.dev.local.yml
+docker-compose.prod.local.yml
+
+# Docker volumes and data
+volumes/
+docker-volumes/
+
+# ===================================
+# DATABASES
+# ===================================
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+*.dump
+dump.rdb
+
+# Redis
+dump.rdb
+appendonly.aof
+
+# PostgreSQL
+*.pgsql
+
+# MongoDB
+*.mongo
+
+# ===================================
+# LOGS
+# ===================================
+*.log
+logs/
+log/
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ===================================
+# IDEs & EDITORS
+# ===================================
+# VSCode
+.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Eclipse
+.classpath
+.project
+.settings/
+.metadata
+
+# NetBeans
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.vim/
+*.un~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# TextMate
+*.tmproj
+*.tmproject
+tmtags
+
+# ===================================
+# OPERATING SYSTEMS
+# ===================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+.nfs*
+
+# ===================================
+# ANDROID
+# ===================================
+# Android Studio
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+*.gradle
+!gradle-wrapper.jar
+.gradle/
+local.properties
+
+# Android keystore and signing files
+keystore.properties
+android/keystore.properties
+android/app/keystore/
+*.keystore
+*.jks
+key.properties
+signing.properties
+
+# Android build outputs
+android/app/build/
+android/build/
+android/.gradle/
+captures/
+.externalNativeBuild
+.cxx
+
+# ===================================
+# IOS
+# ===================================
+# Xcode
+ios/Pods/
+ios/.xcodebuild/
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+ios/build/
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+fastlane/README.md
+
+# ===================================
+# BUILD OUTPUTS
+# ===================================
+dist/
+dist-ssr/
+build/
+*.local
+*.production
+dev-dist/
+
+# Compiled files
+*.com
+*.dll
+*.exe
+*.o
+*.so
+*.dylib
+
+# ===================================
+# TEMPORARY FILES
+# ===================================
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
+*~
+.cache
+.temp
+
+# ===================================
+# TESTING
+# ===================================
+coverage/
+.nyc_output
+*.lcov
+.coverage
+htmlcov/
+
+# ===================================
+# MISC
+# ===================================
+# Backup files
+*.backup
+*.old
+*.orig
+
+# Archive files (be careful with these)
+# *.zip
+# *.tar
+# *.tar.gz
+# *.rar
+# *.7z
+
+# Package files
+*.dmg
+*.pkg
+*.snap
+
+# CI/CD local files
+.gitlab-ci-local/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Ansible
+*.retry
+
+# SSL Certificates (if stored locally)
+*.p12
+*.pfx
+
+# Generated documentation
+docs/_build/
+site/

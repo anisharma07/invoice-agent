@@ -1,0 +1,35 @@
+.invoice-ai-testing-page__content {
+    --padding-start: 0;
+    --padding-end: 0;
+    --padding-top: 0;
+    --padding-bottom: 0;
+    background: var(--ion-color-light, #f8f8f8);
+}
+
+.invoice-ai-testing-page__status {
+    height: calc(100vh - 56px - var(--ion-safe-area-top));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    text-align: center;
+    color: var(--ion-color-medium);
+}
+
+.invoice-ai-testing-page__tester {
+    height: calc(100vh - 56px - var(--ion-safe-area-top));
+}
+
+.invoice-ai-testing-page .template-testing-fullscreen {
+    height: 100%;
+    padding-bottom: 32px;
+}
+
+.invoice-ai-testing-page .app-renderer-card--fullscreen {
+    height: 100%;
+}
+
+.invoice-ai-testing-page .app-renderer-card__content--fullscreen {
+    height: 100%;
+}

@@ -1,0 +1,41 @@
+version:1.5
+cell:A1:t:City Medical Clinic:f:1:c:1:cf:1:colspan:4
+cell:A3:t:Patient Name\c:f:2
+cell:B3:t:John Smith:f:2
+cell:C3:t:Patient ID\c:f:2
+cell:D3:t:MC-2024-001:f:2
+cell:A4:t:Date\c:f:2
+cell:B4:vtf:nd:45951:TODAY():f:2:ntvf:1
+cell:A6:t:Service:f:2:bg:1:cf:1:b:1:1:1:1
+cell:B6:t:Description:f:2:bg:1:cf:1:b:1:1:1:1
+cell:C6:t:Amount:f:2:bg:1:cf:1:b:1:1:1:1
+cell:A7:t:1:b:1:1:1:1
+cell:B7:t:Consultation:b:1:1:1:1
+cell:C7:vtf:n:150:150:b:1:1:1:1:ntvf:2
+cell:A8:t:2:b:1:1:1:1
+cell:B8:t:Blood Test:b:1:1:1:1
+cell:C8:vtf:n:85:85:b:1:1:1:1:ntvf:2
+cell:A9:t:3:b:1:1:1:1
+cell:B9:t:X-Ray:b:1:1:1:1
+cell:C9:vtf:n:200:200:b:1:1:1:1:ntvf:2
+cell:A10:t:4:b:1:1:1:1
+cell:B10:t:Prescription:b:1:1:1:1
+cell:C10:vtf:n:45:45:b:1:1:1:1:ntvf:2
+cell:B12:t:Subtotal\c:f:2:cf:2
+cell:C12:vtf:n:480:SUM(C7\cC10):f:2:ntvf:2:b:2:0:0:0
+cell:B13:t:Insurance Coverage (80%)\c:f:2:cf:2
+cell:C13:vtf:n:384:C12*0.8:f:2:ntvf:2
+cell:B14:t:Patient Responsibility (20%)\c:f:2:cf:2:bg:2
+cell:C14:vtf:n:96:C12*0.2:f:3:ntvf:2:bg:2:b:2:2:2:2
+sheet:c:4:r:14
+font:1:normal bold 18pt Arial,Helvetica,sans-serif
+font:2:normal normal 12pt Arial,Helvetica,sans-serif
+font:3:normal bold 12pt Arial,Helvetica,sans-serif
+color:1:rgb(0,100,200)
+color:2:rgb(200,230,255)
+cellformat:1:center
+cellformat:2:right
+border:1:1px solid rgb(0,100,200)
+border:2:2px solid rgb(0,100,200)
+valueformat:1:dd-mmm-yyyy
+valueformat:2:$#,##0.00

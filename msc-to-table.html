@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Trebuchet MS', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .invoice-wrapper {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        td {
+            border: 1px solid #ddd;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .invoice-title {
+            font-size: 16pt;
+            font-weight: bold;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+        }
+
+        .section-header {
+            font-weight: bold;
+            background-color: #f5f5f5;
+            padding: 8px;
+        }
+
+        .table-header {
+            background-color: #667eea;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .total-row {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            font-size: 11pt;
+        }
+
+        .thank-you {
+            font-style: italic;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            color: #667eea;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .left {
+            text-align: left;
+        }
+
+        .amount-cell {
+            text-align: right;
+            padding-right: 10px;
+        }
+
+        .input-section {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            resize: vertical;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .error {
+            background-color: #fee;
+            border: 2px solid #c00;
+            color: #c00;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .input-section {
+                display: none;
+            }
+
+            .invoice-wrapper {
+                box-shadow: none;
+                padding: 20px;
+            }
+
+            h1 {
+                color: #667eea;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 Invoice Viewer</h1>
+        
+        <div class="input-section">
+            <h2 style="margin-bottom: 15px; color: #667eea;">Paste Invoice Data:</h2>
+            <textarea id="invoiceData" placeholder="Paste your invoice data here..."></textarea>
+            <button onclick="renderInvoice()">🎨 Render Invoice</button>
+        </div>
+
+        <div id="error" style="display: none;" class="error"></div>
+        
+        <div id="output" class="invoice-wrapper" style="display: none;">
+            <table id="invoiceTable"></table>
+        </div>
+    </div>
+
+    <script>
+        // Default invoice data
+        const defaultData = `version:1.5
+cell:B1:b:::2::l:1:f:10
+cell:C1:b:::2::l:1:f:10
+cell:D1:b:::2::l:1:f:10
+cell:E1:b:::2::l:1:f:10
+cell:F1:b:::2::l:1:f:10
+cell:G1:b:::2::l:1:f:10
+cell:A2:b::2:::l:1:f:10
+cell:B2:t:INVOICE:b:1:1:1:1:f:13:cf:1:colspan:6
+cell:C2:t::b:2::2::l:1:f:10
+cell:D2:t::b:2::2::l:1:f:10
+cell:E2:t::b:2::2::l:1:f:10
+cell:F2:t::b:2::2::l:1:f:10
+cell:G2:t::b:2::2::l:1:f:10
+cell:A3:b::2:::l:3:f:10
+cell:B3:b:2:::2:l:3:f:10
+cell:C3:b:2::::l:1:f:10
+cell:D3:b:2::::l:1:f:10
+cell:E3:b:2::::l:1:f:10
+cell:F3:b:2::::l:1:f:10
+cell:G3:b:2:2:::l:3:f:10
+cell:A4:b::2:::l:3:f:10
+cell:B4:b::::2:l:3:f:6
+cell:C4:t:BILL TO\\c:f:9:colspan:2
+cell:E4:f:5:cf:2
+cell:G4:b::2:::l:3:f:10
+cell:A5:b::2:::l:3:f:10
+cell:B5:b::::2:l:3:f:7
+cell:C5:t:[Name]:f:9:cf:2:colspan:3
+cell:E5:f:1:cf:2
+cell:F5:t::l:2:f:10:tvf:4:rowspan:6
+cell:G5:t::b::1:::l:2:f:10
+cell:A6:b::2:::l:3:f:10
+cell:B6:b::::2:l:3:f:7
+cell:C6:t:[Street Address]:f:9:cf:2:colspan:3
+cell:E6:f:1:cf:2
+cell:F6:l:2:f:10
+cell:G6:b::1:::l:2:f:10
+cell:A7:b::2:::l:3:f:10
+cell:B7:b::::2:l:3:f:7
+cell:C7:t:[City, State, Zip]:f:9:cf:2:colspan:3
+cell:E7:f:1:cf:2
+cell:G7:b::2:::l:3:f:10
+cell:A8:b::2:::l:3:f:10
+cell:B8:b::::2:l:3:f:7
+cell:C8:t:Phone\\c:f:9:cf:2:colspan:3
+cell:D8:f:8:cf:2
+cell:E8:f:1:cf:2
+cell:G8:b::2:::l:3:f:10
+cell:A9:b::2:::l:3:f:10
+cell:B9:b::::2:l:3:f:7
+cell:C9:t:Email\\c:f:9:cf:2:colspan:3
+cell:E9:f:1:cf:2
+cell:G9:b::2:::l:3:f:10
+cell:A10:b::2:::l:3:f:10
+cell:B10:b::::2:l:3:f:7
+cell:C10:colspan:2
+cell:G10:b::2:::l:3:f:10
+cell:A11:b::2:::l:3:f:10
+cell:B11:b::::2:l:3:f:7
+cell:C11:t:FROM\\c:f:9:colspan:2
+cell:E11:f:8:colspan:2
+cell:G11:b::2:::l:3:f:10
+cell:A12:b::2:::l:3:f:10
+cell:B12:b::::2:l:3:f:7
+cell:C12:t:[Name]:f:9:colspan:4
+cell:E12:colspan:2
+cell:G12:b::2:::l:3:f:10
+cell:A13:b::2:::l:3:f:10
+cell:B13:b::::2:l:3:f:7
+cell:C13:t:[Street Address]:f:9:colspan:4
+cell:E13:colspan:2
+cell:G13:b::2:::l:3:f:10
+cell:A14:b::2:::l:3:f:10
+cell:B14:b::::2:l:3:f:7
+cell:C14:t:[City, State, Zip]:f:9:colspan:4
+cell:E14:colspan:2
+cell:G14:b::2:::l:3:f:10
+cell:A15:b::2:::l:3:f:10
+cell:B15:b::::2:l:3:f:7
+cell:C15:t:Phone\\c:f:9:colspan:4
+cell:D15:f:8:cf:2:colspan:3
+cell:E15:colspan:2
+cell:G15:b::2:::l:3:f:10
+cell:A16:b::2:::l:3:f:10
+cell:B16:b::::2:l:3:f:7
+cell:C16:t:Email\\c:f:9:colspan:4
+cell:E16:colspan:2
+cell:G16:b::2:::l:3:f:10
+cell:A17:b::2:::l:3:f:10
+cell:B17:b::::2:l:3:f:6
+cell:G17:b::2:::l:3:f:10
+cell:A18:b::2:::l:3:f:10
+cell:B18:b::::2:l:3:f:10
+cell:C18:t:INVOICE #\\c:f:9:cf:2:colspan:4
+cell:D18:v:1:l:4:f:9:cf:2:colspan:3
+cell:G18:b::2:::l:3:f:10
+cell:A19:b::2:::l:3:f:10
+cell:B19:b::::2:l:3:f:10
+cell:G19:b::2:::l:3:f:10
+cell:A20:b::2:::l:3:f:10
+cell:B20:b::::2:l:3:f:10
+cell:C20:t:DATE\\c:f:9:cf:2
+cell:D20:vtf:nd:42081:TODAY():f:9:cf:2:ntvf:3:colspan:2
+cell:G20:b::2:::l:3:f:10
+cell:A21:b::2:::l:3:f:10
+cell:B21:b::::2:l:3:f:6:cf:2
+cell:C21:b:::2::l:1:f:10
+cell:D21:b:::2::l:3:f:6:cf:2
+cell:E21:b:::2::l:1:f:10
+cell:F21:b:::2::l:1:f:10
+cell:G21:b::2:::l:3:f:10
+cell:A22:b::2:::l:3:f:10
+cell:B22:b::2::2:l:3:f:10
+cell:C22:t:Description:b:1::1:1:f:9:cf:1:colspan:3
+cell:D22:t:Description:b:1::1::l:3:f:6:cf:2:colspan:2:rowspan:1
+cell:E22:t::b:2:2:2::l:1:f:10
+cell:F22:t:Amount:b:1:1:1:1:f:9:cf:1
+cell:G22:b::2::2:l:3:f:10
+cell:A23:b::2:::l:3:f:10
+cell:B23:b::2::2:l:3:f:10
+cell:C23:b:1:1::1:f:2:cf:2:colspan:3
+cell:D23:b:1:1:::l:3:f:10:cf:2:colspan:2:rowspan:1
+cell:E23:t::b:2:2:2::l:1:f:10
+cell:F23:b:1:1:::f:2:ntvf:1
+cell:G23:b::2::2:l:3:f:10
+cell:A24:b::2:::l:3:f:10
+cell:B24:b::2::2:l:3:f:10:cf:2
+cell:C24:b::1::1:f:2:cf:2:colspan:3
+cell:D24:b::1:::l:1:f:10:colspan:2
+cell:E24:l:1:f:10
+cell:F24:b::1:::f:2:ntvf:1
+cell:G24:b::2::2:l:3:f:10
+cell:A25:b::2:::l:3:f:10
+cell:B25:b::2::2:l:3:f:10:cf:2:ntvf:2
+cell:C25:b::1::1:f:2:cf:2:colspan:3
+cell:D25:b::1:::colspan:2
+cell:F25:b::1:::f:2:ntvf:1
+cell:G25:b::2::2:l:3:f:10
+cell:A26:b::2:::l:3:f:10
+cell:B26:b::2::2:l:3:f:10:cf:2:ntvf:2
+cell:C26:b::1::1:f:2:cf:2:colspan:3
+cell:D26:b::1:::colspan:2
+cell:F26:b::1:::f:2:ntvf:1
+cell:G26:b::2::2:l:3:f:10
+cell:A27:b::2:::l:3:f:10
+cell:B27:b::2::2:l:3:f:10:cf:2:ntvf:2
+cell:C27:b::1::1:f:2:cf:2:colspan:3
+cell:D27:b::1:::colspan:2
+cell:F27:b::1:::f:2:ntvf:1
+cell:G27:b::2::2:l:3:f:10
+cell:A28:b::2:::l:3:f:10
+cell:B28:b::2::2:l:3:f:10:cf:2:ntvf:2
+cell:C28:b::1::1:f:2:cf:2:colspan:3
+cell:D28:b::1:::colspan:2
+cell:F28:b::1:::f:2:ntvf:1
+cell:G28:b::2::2:l:3:f:10
+cell:A29:b::2:::l:3:f:10
+cell:B29:b::2::2:l:3:f:10:cf:2:ntvf:2
+cell:C29:b::1::1:f:2:cf:2:colspan:3
+cell:D29:b::1:::colspan:2
+cell:F29:b::1:::f:2:ntvf:1
+cell:G29:b::2::2:l:3:f:10
+cell:A30:b::2:::l:3:f:10
+cell:B30:b::2::2:l:3:f:10:cf:2
+cell:C30:b::1::1:f:2:cf:2:colspan:3
+cell:D30:b::1:::colspan:2
+cell:F30:b::1:::f:2:ntvf:1
+cell:G30:b::2::2:l:3:f:10
+cell:A31:b::2:::l:3:f:10
+cell:B31:b::2::2:l:3:f:10:cf:2
+cell:C31:b::1::1:f:2:cf:2:colspan:3
+cell:D31:b::1:::colspan:2
+cell:F31:b::1:::f:2:ntvf:1
+cell:G31:b::2::2:l:3:f:10
+cell:A32:b::2:::l:3:f:10
+cell:B32:b::2::2:l:3:f:10:cf:2
+cell:C32:b::1::1:f:2:cf:2:colspan:3
+cell:D32:b::1:::colspan:2
+cell:F32:b::1:::f:2:ntvf:1
+cell:G32:b::2::2:l:3:f:10
+cell:A33:b::2:::l:3:f:10
+cell:B33:b::2::2:l:3:f:10:cf:2
+cell:C33:b::1::1:f:2:cf:2:colspan:3
+cell:D33:b::1:::colspan:2
+cell:F33:b::1:::f:2:ntvf:1
+cell:G33:b::2::2:l:3:f:10
+cell:A34:b::2:::l:3:f:10
+cell:B34:b::2::2:l:3:f:10:cf:2
+cell:C34:b::1::1:f:2:cf:2:colspan:3
+cell:D34:b::1:::colspan:2
+cell:F34:b::1:::f:2:ntvf:1
+cell:G34:b::2::2:l:3:f:10
+cell:A35:b::2:::l:3:f:7
+cell:B35:b::2::2:l:3:f:10:cf:2
+cell:C35:b::1:1:1:f:2:cf:2:colspan:3
+cell:D35:b::1:1::l:3:f:10:cf:2:colspan:2
+cell:E35:b:::2::l:3:f:10:cf:2
+cell:F35:b::1:1::f:2:ntvf:1
+cell:G35:b::2::2:l:3:f:10
+cell:A36:b::2:::l:3:f:6
+cell:B36:b::2::2:l:3:f:6
+cell:C36:t:TOTAL:b:1:1:1:1:f:11:cf:2:colspan:3
+cell:D36:b:2::2::l:3:f:12:cf:2
+cell:E36:b:2:2:2::l:3:f:12:cf:2
+cell:F36:vtf:n:0:SUM(F23\\cF35):b:1:1:1::f:11:ntvf:1
+cell:G36:b::2::2:l:3:f:7
+cell:A37:b::2:::l:3:f:10
+cell:B37:b::::2:l:3:f:6:cf:2
+cell:C37:b:2::::l:1:f:10
+cell:D37:b:2::::l:1:f:10
+cell:E37:b:2::::l:1:f:10
+cell:F37:b:2::::l:1:f:10
+cell:G37:b::2:::l:3:f:6
+cell:A38:b::2:::l:3:f:10
+cell:B38:b::::2:l:3:f:10
+cell:G38:b::2:::l:3:f:10
+cell:A39:b::2:::l:3:f:10
+cell:B39:b::::2:l:3:f:10:cf:2
+cell:C39:t:Thank you for your business:f:4:cf:1:colspan:4
+cell:D39:t:Thank you for your business:colspan:3
+cell:E39:t:Thank you for your business:f:3:colspan:2
+cell:F39:t::l:2:f:10
+cell:G39:b::2:::l:3:f:10
+cell:A40:b::2:::l:3:f:10
+cell:B40:b::::2:l:3:f:10
+cell:G40:b::2:::l:3:f:10
+cell:A41:b::2:::l:3:f:10
+cell:B41:b:::2:2:l:3:f:10
+cell:C41:b:::2::l:3:f:10
+cell:D41:b:::2::l:3:f:10
+cell:E41:b:::2::l:3:f:10
+cell:F41:b:::2::l:3:f:10
+cell:G41:b::2:2::l:3:f:10
+cell:B42:b:1:::
+cell:C42:b:1:::
+cell:D42:b:1:::
+cell:E42:b:1:::
+cell:F42:b:1:::
+cell:G42:b:1:::
+col:A:w:10
+col:B:w:10
+col:C:w:62
+col:D:w:73
+col:E:w:15
+col:F:w:68
+col:G:w:10
+row:1:h:14.25
+row:2:h:18.75
+row:3:h:14.25
+row:4:h:14.25
+row:5:h:15.75
+row:6:h:15.75
+row:7:h:15.75
+row:8:h:15.75
+row:9:h:14.25
+row:10:h:14.25
+row:11:h:14.25
+row:12:h:14.25
+row:13:h:14.25
+row:14:h:14.25
+row:15:h:14.25
+row:16:h:14.25
+row:17:h:14.25
+row:18:h:14.25
+row:19:h:14.25
+row:20:h:14.25
+row:21:h:14.25
+row:22:h:14.25
+row:23:h:14.25
+row:24:h:14.25
+row:25:h:14.25
+row:26:h:14.25
+row:27:h:14.25
+row:28:h:14.25
+row:29:h:14.25
+row:30:h:14.25
+row:31:h:14.25
+row:32:h:14.25
+row:33:h:14.25
+row:34:h:14.25
+row:35:h:15.75
+row:36:h:15.75
+row:37:h:14.25
+row:38:h:14.25
+row:39:h:14.25
+row:40:h:14.25
+row:41:h:14.25
+sheet:c:7:r:42:h:12.75
+border:1:1px solid rgb(0,0,0)
+border:2:thin solid rgb(0,0,0)
+cellformat:1:center
+cellformat:2:left
+font:1:* * Trebuchet MS
+font:2:* 9pt Trebuchet MS
+font:3:italic bold * Trebuchet MS
+font:4:italic bold 10pt Trebuchet MS
+font:5:normal bold * Trebuchet MS
+font:6:normal bold 10pt Arial
+font:7:normal bold 12pt Arial
+font:8:normal normal * *
+font:9:normal normal * Trebuchet MS
+font:10:normal normal 10pt Arial
+font:11:normal normal 11pt Trebuchet MS
+font:12:normal normal 12pt Arial
+font:13:normal normal 16pt Trebuchet MS
+layout:1:padding:* * * *;vertical-align:bottom;
+layout:2:padding:* * * *;vertical-align:middle;
+layout:3:padding:* * * *;vertical-align:top;
+layout:4:padding:* * * 4px;vertical-align:*;
+valueformat:1:#,##0.00
+valueformat:2:d-mmm
+valueformat:3:m/d/yy
+valueformat:4:text-html`;
+
+        // Load default data on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('invoiceData').value = defaultData;
+            renderInvoice();
+        });
+
+        function parseInvoiceData(data) {
+            const lines = data.trim().split('\n');
+            const cells = {};
+            const cols = {};
+            const rows = {};
+            const borders = {};
+            const cellformats = {};
+            const fonts = {};
+            const layouts = {};
+            const valueformats = {};
+            let sheetInfo = { cols: 7, rows: 42 };
+
+            lines.forEach(line => {
+                const parts = line.split(':');
+                const type = parts[0];
+
+                if (type === 'cell') {
+                    const cellRef = parts[1];
+                    const cellData = {};
+                    for (let i = 2; i < parts.length; i += 2) {
+                        if (i + 1 < parts.length) {
+                            cellData[parts[i]] = parts[i + 1];
+                        }
+                    }
+                    cells[cellRef] = cellData;
+                } else if (type === 'col') {
+                    cols[parts[1]] = { w: parts[3] };
+                } else if (type === 'row') {
+                    rows[parts[1]] = { h: parts[3] };
+                } else if (type === 'sheet') {
+                    sheetInfo = { cols: parseInt(parts[2]), rows: parseInt(parts[4]) };
+                } else if (type === 'border') {
+                    borders[parts[1]] = parts[2];
+                } else if (type === 'cellformat') {
+                    cellformats[parts[1]] = parts[2];
+                } else if (type === 'font') {
+                    fonts[parts[1]] = parts.slice(2).join(':');
+                } else if (type === 'layout') {
+                    layouts[parts[1]] = parts.slice(2).join(':');
+                } else if (type === 'valueformat') {
+                    valueformats[parts[1]] = parts.slice(2).join(':');
+                }
+            });
+
+            return { cells, cols, rows, sheetInfo, borders, cellformats, fonts, layouts, valueformats };
+        }
+
+        function columnToIndex(col) {
+            let index = 0;
+            for (let i = 0; i < col.length; i++) {
+                index = index * 26 + (col.charCodeAt(i) - 64);
+            }
+            return index;
+        }
+
+        function renderInvoice() {
+            const errorDiv = document.getElementById('error');
+            const outputDiv = document.getElementById('output');
+            const invoiceTable = document.getElementById('invoiceTable');
+            
+            errorDiv.style.display = 'none';
+            
+            try {
+                const data = document.getElementById('invoiceData').value;
+                const parsed = parseInvoiceData(data);
+                
+                invoiceTable.innerHTML = '';
+                
+                // Create grid to track merged cells
+                const grid = Array(parsed.sheetInfo.rows + 1).fill(null).map(() => 
+                    Array(parsed.sheetInfo.cols + 1).fill(null)
+                );
+
+                // Process all cells to mark merged areas
+                Object.entries(parsed.cells).forEach(([cellRef, cellData]) => {
+                    const col = cellRef.match(/[A-Z]+/)[0];
+                    const row = parseInt(cellRef.match(/\d+/)[0]);
+                    const colIndex = columnToIndex(col);
+                    
+                    const colspan = parseInt(cellData.colspan || 1);
+                    const rowspan = parseInt(cellData.rowspan || 1);
+                    
+                    for (let r = row; r < row + rowspan; r++) {
+                        for (let c = colIndex; c < colIndex + colspan; c++) {
+                            if (r === row && c === colIndex) {
+                                grid[r][c] = { cellRef, cellData, colspan, rowspan };
+                            } else {
+                                grid[r][c] = 'merged';
+                            }
+                        }
+                    }
+                });
+
+                // Render table
+                for (let row = 1; row <= parsed.sheetInfo.rows; row++) {
+                    const tr = document.createElement('tr');
+                    if (parsed.rows[row]) {
+                        tr.style.height = `${parsed.rows[row].h}pt`;
+                    }
+                    
+                    for (let colIndex = 1; colIndex <= parsed.sheetInfo.cols; colIndex++) {
+                        if (grid[row][colIndex] === 'merged') {
+                            continue; // Skip merged cells
+                        }
+                        
+                        const td = document.createElement('td');
+                        const cellInfo = grid[row][colIndex];
+                        
+                        if (cellInfo) {
+                            const { cellData, colspan, rowspan } = cellInfo;
+                            
+                            if (colspan > 1) td.colSpan = colspan;
+                            if (rowspan > 1) td.rowSpan = rowspan;
+                            
+                            // Set cell text
+                            if (cellData.t) {
+                                let text = cellData.t.replace(/\\c/g, '');
+                                td.textContent = text;
+                            } else if (cellData.v) {
+                                td.textContent = cellData.v;
+                            } else if (cellData.vtf) {
+                                // Handle formulas - extract the formula result or display placeholder
+                                const formula = cellData.vtf;
+                                if (formula.includes('SUM')) {
+                                    td.textContent = '$0.00';
+                                    td.classList.add('amount-cell');
+                                } else if (formula.includes('TODAY')) {
+                                    const today = new Date();
+                                    td.textContent = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear().toString().substr(-2)}`;
+                                }
+                            }
+                            
+                            // Apply borders
+                            if (cellData.b) {
+                                const borderIds = cellData.b.split(',');
+                                borderIds.forEach(bid => {
+                                    if (parsed.borders[bid]) {
+                                        td.style.border = parsed.borders[bid];
+                                    }
+                                });
+                            }
+                            
+                            // Apply cell format (alignment)
+                            if (cellData.cf) {
+                                const formatId = cellData.cf;
+                                if (parsed.cellformats[formatId] === 'center') {
+                                    td.style.textAlign = 'center';
+                                } else if (parsed.cellformats[formatId] === 'left') {
+                                    td.style.textAlign = 'left';
+                                }
+                            }
+                            
+                            // Apply font
+                            if (cellData.f) {
+                                const fontId = cellData.f;
+                                if (parsed.fonts[fontId]) {
+                                    const fontParts = parsed.fonts[fontId].split(' ');
+                                    let fontStyle = '';
+                                    let fontWeight = '';
+                                    let fontSize = '';
+                                    let fontFamily = '';
+                                    
+                                    fontParts.forEach((part, idx) => {
+                                        if (part === 'italic') fontStyle = 'italic';
+                                        if (part === 'bold') fontWeight = 'bold';
+                                        if (part.includes('pt')) fontSize = part;
+                                        if (idx >= fontParts.length - 1 || part.includes('MS') || part === 'Arial') {
+                                            fontFamily += part + ' ';
+                                        }
+                                    });
+                                    
+                                    if (fontStyle) td.style.fontStyle = fontStyle;
+                                    if (fontWeight) td.style.fontWeight = fontWeight;
+                                    if (fontSize) td.style.fontSize = fontSize;
+                                    if (fontFamily.trim()) td.style.fontFamily = fontFamily.trim();
+                                }
+                            }
+                            
+                            // Apply layout (padding, vertical-align)
+                            if (cellData.l) {
+                                const layoutId = cellData.l;
+                                if (parsed.layouts[layoutId]) {
+                                    const layout = parsed.layouts[layoutId];
+                                    if (layout.includes('vertical-align:bottom')) {
+                                        td.style.verticalAlign = 'bottom';
+                                    } else if (layout.includes('vertical-align:middle')) {
+                                        td.style.verticalAlign = 'middle';
+                                    } else if (layout.includes('vertical-align:top')) {
+                                        td.style.verticalAlign = 'top';
+                                    }
+                                    td.style.padding = '8px';
+                                }
+                            }
+                            
+                            // Apply special styling based on content
+                            if (td.textContent === 'INVOICE') {
+                                td.classList.add('invoice-title');
+                            } else if (td.textContent === 'BILL TO' || td.textContent === 'FROM') {
+                                td.classList.add('section-header');
+                            } else if (td.textContent === 'Description' || td.textContent === 'Amount') {
+                                td.classList.add('table-header');
+                            } else if (td.textContent === 'TOTAL') {
+                                td.classList.add('total-row');
+                                td.style.textAlign = 'center';
+                            } else if (td.textContent.includes('Thank you for your business')) {
+                                td.classList.add('thank-you');
+                            }
+                            
+                            // Apply number formatting for amount cells
+                            if (cellData.ntvf === '1' || td.classList.contains('amount-cell')) {
+                                td.classList.add('amount-cell');
+                            }
+                        }
+                        
+                        // Set column width
+                        const colLetter = String.fromCharCode(64 + colIndex);
+                        if (parsed.cols[colLetter]) {
+                            td.style.width = `${parsed.cols[colLetter].w}px`;
+                        }
+                        
+                        tr.appendChild(td);
+                    }
+                    
+                    invoiceTable.appendChild(tr);
+                }
+                
+                outputDiv.style.display = 'block';
+            } catch (error) {
+                errorDiv.textContent = `Error parsing invoice data: ${error.message}`;
+                errorDiv.style.display = 'block';
+                outputDiv.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

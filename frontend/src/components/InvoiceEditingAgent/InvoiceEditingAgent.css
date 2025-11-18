@@ -1,0 +1,281 @@
+/* Invoice Editing Agent Styles */
+
+.invoice-editing-modal {
+    --width: 90%;
+    --height: 90%;
+    --border-radius: 12px;
+}
+
+@media (min-width: 768px) {
+    .invoice-editing-modal {
+        --width: 800px;
+        --height: 80vh;
+    }
+}
+
+.invoice-editing-content {
+    --padding-top: 0;
+    --padding-bottom: 0;
+}
+
+.messages-container {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 80px;
+    /* Space for input area */
+}
+
+.message {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 8px;
+    background: var(--ion-color-light);
+    max-width: 85%;
+}
+
+.message-user {
+    align-self: flex-end;
+    background: var(--ion-color-primary-tint);
+}
+
+.message-assistant {
+    align-self: flex-start;
+    background: var(--ion-color-success-tint);
+}
+
+.message-system {
+    align-self: center;
+    background: var(--ion-color-medium-tint);
+    max-width: 95%;
+    text-align: center;
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.message-time {
+    font-size: 0.75rem;
+}
+
+.message-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.message-content p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Cell Updates Styling */
+.cell-updates-container {
+    background: var(--ion-color-light);
+    border: 1px solid var(--ion-color-primary);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+}
+
+.cell-updates-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--ion-color-primary-tint);
+}
+
+.cell-updates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.cell-update-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid var(--ion-color-light-shade);
+}
+
+.cell-address {
+    min-width: 60px;
+    font-weight: bold;
+    font-family: monospace;
+}
+
+.cell-value {
+    flex: 1;
+    word-break: break-word;
+}
+
+.cell-value .formula {
+    background: var(--ion-color-warning-tint);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9em;
+    color: var(--ion-color-warning-shade);
+    font-weight: 600;
+}
+
+/* Input Container */
+.input-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--ion-background-color);
+    border-top: 1px solid var(--ion-color-light-shade);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-actions {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.input-textarea {
+    flex: 1;
+    --background: var(--ion-color-light);
+    --padding-start: 12px;
+    --padding-end: 12px;
+    --padding-top: 8px;
+    --padding-bottom: 8px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+/* Image Preview */
+.image-preview-container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 8px;
+}
+
+.image-preview {
+    max-width: 200px;
+    max-height: 150px;
+    border-radius: 8px;
+    border: 2px solid var(--ion-color-primary);
+    object-fit: cover;
+}
+
+.remove-image-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    --border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    --padding-start: 0;
+    --padding-end: 0;
+}
+
+/* Loading State */
+.message-assistant ion-spinner {
+    margin-right: 8px;
+}
+
+/* Scrollbar Styling */
+.cell-updates-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.cell-updates-list::-webkit-scrollbar-track {
+    background: var(--ion-color-light);
+    border-radius: 3px;
+}
+
+.cell-updates-list::-webkit-scrollbar-thumb {
+    background: var(--ion-color-primary);
+    border-radius: 3px;
+}
+
+.cell-updates-list::-webkit-scrollbar-thumb:hover {
+    background: var(--ion-color-primary-shade);
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .message {
+        background: var(--ion-color-step-100);
+    }
+
+    .message-user {
+        background: var(--ion-color-primary-shade);
+    }
+
+    .message-assistant {
+        background: var(--ion-color-success-shade);
+    }
+
+    .message-system {
+        background: var(--ion-color-medium-shade);
+    }
+
+    .cell-updates-container {
+        background: var(--ion-color-step-100);
+    }
+
+    .cell-update-item {
+        background: var(--ion-color-step-50);
+    }
+
+    .input-textarea {
+        --background: var(--ion-color-step-100);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .message {
+        max-width: 90%;
+    }
+
+    .cell-updates-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .cell-update-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* Animation */
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.message {
+    animation: slideUp 0.3s ease-out;
+}

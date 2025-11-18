@@ -1,0 +1,131 @@
+{
+  "templateMeta": {
+    "name": "Good-Invoice",
+    "domain": "invoice",
+    "category": "professional_invoice",
+    "deviceType": "desktop",
+    "description": "Clean and professional invoice template with comprehensive billing details"
+  },
+  "rawMsc": {
+    "numsheets": 1,
+    "currentid": "sheet1",
+    "currentname": "sheet1",
+    "sheetArr": {},
+    "EditableCells": {
+      "allow": true,
+      "cells": {
+        "sheet1!A1": true,
+        "sheet1!G35": true,
+        "sheet1!E1": true,
+        "sheet1!G4": true,
+        "sheet1!G3": true,
+        "sheet1!A4": true,
+        "sheet1!A5": true,
+        "sheet1!A6": true,
+        "sheet1!A7": true,
+        "sheet1!A8": true,
+        "sheet1!A11": true,
+        "sheet1!A12": true,
+        "sheet1!A13": true,
+        "sheet1!A14": true,
+        "sheet1!A15": true,
+        "sheet1!B19": true,
+        "sheet1!D19": true,
+        "sheet1!E19": true,
+        "sheet1!F19": true,
+        "sheet1!B20": true,
+        "sheet1!D20": true,
+        "sheet1!E20": true,
+        "sheet1!F20": true,
+        "sheet1!B21": true,
+        "sheet1!D21": true,
+        "sheet1!E21": true,
+        "sheet1!F21": true,
+        "sheet1!B22": true,
+        "sheet1!D22": true,
+        "sheet1!E22": true,
+        "sheet1!F22": true,
+        "sheet1!B23": true,
+        "sheet1!D23": true,
+        "sheet1!E23": true,
+        "sheet1!F23": true,
+        "sheet1!B24": true,
+        "sheet1!D24": true,
+        "sheet1!E24": true,
+        "sheet1!F24": true,
+        "sheet1!B25": true,
+        "sheet1!D25": true,
+        "sheet1!E25": true,
+        "sheet1!F25": true,
+        "sheet1!B26": true,
+        "sheet1!D26": true,
+        "sheet1!E26": true,
+        "sheet1!F26": true,
+        "sheet1!B27": true,
+        "sheet1!D27": true,
+        "sheet1!E27": true,
+        "sheet1!F27": true,
+        "sheet1!B28": true,
+        "sheet1!D28": true,
+        "sheet1!E28": true,
+        "sheet1!F28": true,
+        "sheet1!F30": true,
+        "sheet1!F31": true,
+        "sheet1!F32": true,
+        "sheet1!A35": true,
+        "sheet1!A37": true
+      },
+      "constraints": {}
+    }
+  },
+  "cellMappings": {
+    "logo": {
+      "sheet1": "A1"
+    },
+    "signature": {
+      "sheet1": "G35"
+    },
+    "text": {
+      "sheet1": {
+        "Heading": "E1",
+        "Date": "G4",
+        "InvoiceNumber": "G3",
+        "From": {
+          "Name": "A4",
+          "StreetAddress": "A5",
+          "CityStateZip": "A6",
+          "Phone": "A7",
+          "Email": "A8"
+        },
+        "BillTo": {
+          "Name": "A11",
+          "StreetAddress": "A12",
+          "CityStateZip": "A13",
+          "Phone": "A14",
+          "Email": "A15"
+        },
+        "Items": {
+          "Name": "Items",
+          "Heading": "Invoice Items",
+          "Subheading": "Item Details",
+          "Rows": {
+            "start": 19,
+            "end": 28
+          },
+          "Columns": {
+            "Description": "B",
+            "Quantity": "D",
+            "UnitPrice": "E",
+            "Amount": "F"
+          }
+        },
+        "Subtotal": "F30",
+        "Tax": "F31",
+        "Total": "F32",
+        "Notes": "A35",
+        "PaymentTerms": "A37"
+      }
+    }
+  },
+  "timestamp": "2025-11-16T17:52:11.590Z"
+}

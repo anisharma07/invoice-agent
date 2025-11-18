@@ -1,0 +1,53 @@
+.msc-preview-card {
+    margin-bottom: 16px;
+    min-height: 70vh;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.msc-preview-card ion-card-header {
+    background: var(--ion-color-light, #f4f5f8);
+    border-bottom: 1px solid var(--ion-border-color, #ddd);
+}
+
+.msc-preview-card ion-card-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ion-color-primary, #3880ff);
+}
+
+.msc-preview-container {
+    width: 100%;
+    height: 70vh;
+    background: white;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.msc-preview-container #workbookControl {
+    margin-bottom: 8px;
+}
+
+.msc-preview-container #tableeditor {
+    width: 100%;
+    overflow: auto;
+}
+
+.msc-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    text-align: center;
+}
+
+.msc-empty-state p {
+    font-size: 14px;
+    color: var(--ion-color-medium, #92949c);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .msc-preview-container {
+        min-height: 70vh;
+    }
+}
