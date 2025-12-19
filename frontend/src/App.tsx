@@ -9,6 +9,10 @@ import LandingPage from "./pages/LandingPage";
 import InvoiceAIPage from "./pages/InvoiceAIPage";
 import InvoiceAITestingPage from "./pages/InvoiceAITestingPage";
 import InvoiceStorePage from "./pages/InvoiceStorePage";
+import DashboardLayout from "./components/DashboardLayout";
+import DashboardHome from "./pages/DashboardHome";
+import JobsPage from "./pages/JobsPage";
+import TemplatesPage from "./pages/TemplatesPage";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import { InvoiceProvider } from "./contexts/InvoiceContext";
 import PWAUpdatePrompt from "./components/PWAUpdatePrompt";
@@ -67,23 +71,43 @@ const AppContent: React.FC = () => {
         <IonReactRouter>
           <IonRouterOutlet>
             <Route exact path="/">
-              {showLandingPage ? <LandingPage /> : <Redirect to="/app/files" />}
+              {showLandingPage ? <LandingPage /> : <Redirect to="/app/dashboard/home" />}
             </Route>
             <Route path="/app">
               {!isOnline && <OfflineIndicator />}
               <IonRouterOutlet>
+                {/* Dashboard Routes */}
+                <Route path="/app/dashboard" render={() => (
+                  <DashboardLayout>
+                    <IonRouterOutlet>
+                      <Route exact path="/app/dashboard/home" component={DashboardHome} />
+                      <Route exact path="/app/dashboard/files" component={FilesPage} />
+                      <Route exact path="/app/dashboard/templates" component={TemplatesPage} />
+                      <Route exact path="/app/dashboard/store" component={InvoiceStorePage} />
+                      <Route exact path="/app/dashboard/jobs" component={JobsPage} />
+                      <Route exact path="/app/dashboard/settings" component={SettingsPage} />
+                      <Route exact path="/app/dashboard">
+                        <Redirect to="/app/dashboard/home" />
+                      </Route>
+                    </IonRouterOutlet>
+                  </DashboardLayout>
+                )} />
+
                 <Route exact path="/app/editor/:fileName">
                   <Home />
                 </Route>
                 <Route exact path="/app/editor">
                   <Home />
                 </Route>
+
+                {/* Legacy Redirects */}
                 <Route exact path="/app/files">
-                  <FilesPage />
+                  <Redirect to="/app/dashboard/files" />
                 </Route>
                 <Route exact path="/app/settings">
-                  <SettingsPage />
+                  <Redirect to="/app/dashboard/settings" />
                 </Route>
+
                 <Route exact path="/app/invoice-ai">
                   <InvoiceAIPage />
                 </Route>
@@ -91,10 +115,10 @@ const AppContent: React.FC = () => {
                   <InvoiceAITestingPage />
                 </Route>
                 <Route exact path="/app/invoice-store">
-                  <InvoiceStorePage />
+                  <Redirect to="/app/dashboard/store" />
                 </Route>
                 <Route exact path="/app">
-                  <Redirect to="/app/files" />
+                  <Redirect to="/app/dashboard/home" />
                 </Route>
               </IonRouterOutlet>
             </Route>

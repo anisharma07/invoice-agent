@@ -474,9 +474,9 @@ const Files: React.FC<{
           type: "local",
           templateMetadata: fileData.templateId
             ? {
-                templateId: fileData.templateId,
-                template: getTemplateInfo(fileData.templateId),
-              }
+              templateId: fileData.templateId,
+              template: getTemplateInfo(fileData.templateId),
+            }
             : null,
         };
       });
@@ -500,8 +500,8 @@ const Files: React.FC<{
         const emptyMessage = searchQuery.trim()
           ? `No files found matching "${searchQuery}"`
           : selectedCategoryFilter !== "all"
-          ? `No files found for ${selectedCategoryFilter} category`
-          : "No local files found";
+            ? `No files found for ${selectedCategoryFilter} category`
+            : "No local files found";
 
         content = (
           <IonList style={{ border: "none" }} lines="none">
@@ -742,19 +742,7 @@ const Files: React.FC<{
     <div>
       <div>
         <div className="files-modal-content">
-          {/* File Source Tabs */}
-          <div className="custom-tabs-container">
-            <div className="custom-tabs">
-              <button
-                className={`custom-tab-button ${
-                  fileSource === "local" ? "active" : ""
-                }`}
-                onClick={() => setFileSource("local")}
-              >
-                🏠 Your Files
-              </button>
-            </div>
-          </div>
+          {/* File Source Tabs - Removed */}
           <div style={{ padding: "0 16px 16px 16px" }}>
             <div
               style={{

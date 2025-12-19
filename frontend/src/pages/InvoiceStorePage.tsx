@@ -256,19 +256,9 @@ const InvoiceStorePage: React.FC = () => {
 
     return (
         <IonPage>
-            <IonHeader>
-                <IonToolbar>
-                    <IonButtons slot="start">
-                        <IonBackButton defaultHref="/app/files" />
-                    </IonButtons>
-                    <IonTitle>
-                        <IonIcon icon={storefront} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                        Invoice Store
-                    </IonTitle>
-                </IonToolbar>
-
+            <IonContent className="invoice-store-content">
                 {/* Tabs */}
-                <IonToolbar>
+                <div style={{ padding: '10px 16px 0' }}>
                     <IonSegment value={activeTab} onIonChange={e => setActiveTab(e.detail.value as TabType)}>
                         <IonSegmentButton value="all">
                             <IonLabel>All Templates</IonLabel>
@@ -295,10 +285,10 @@ const InvoiceStorePage: React.FC = () => {
                             </IonLabel>
                         </IonSegmentButton>
                     </IonSegment>
-                </IonToolbar>
+                </div>
 
                 {/* Search and Filters */}
-                <IonToolbar>
+                <div style={{ padding: '10px 16px' }}>
                     <div className="search-filter-container">
                         <IonSearchbar
                             value={searchText}
@@ -350,10 +340,8 @@ const InvoiceStorePage: React.FC = () => {
                             </IonSelect>
                         </div>
                     </div>
-                </IonToolbar>
-            </IonHeader>
+                </div>
 
-            <IonContent className="invoice-store-content">
                 {isLoading ? (
                     <div className="loading-container">
                         <IonSpinner name="crescent" />

@@ -830,21 +830,6 @@ const SettingsPage: React.FC = () => {
     <IonPage
       className={isDarkMode ? "settings-page-dark" : "settings-page-light"}
     >
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonButton 
-              fill="clear" 
-              onClick={() => history.push("/app/files")}
-            >
-              <IonIcon icon={arrowBack} />
-            </IonButton>
-          </IonButtons>
-          <IonTitle style={{ fontWeight: "bold", fontSize: "1.3em" }}>
-            Settings
-          </IonTitle>
-        </IonToolbar>
-      </IonHeader>
       <IonContent
         fullscreen
         className={
@@ -1018,15 +1003,14 @@ const SettingsPage: React.FC = () => {
                     style={{
                       width: "150px",
                       height: "80px",
-                      border: `2px solid ${
-                        selectedSignatureId === null
+                      border: `2px solid ${selectedSignatureId === null
                           ? isDarkMode
                             ? "#4c8dff"
                             : "#3880ff"
                           : isDarkMode
-                          ? "#555"
-                          : "#ddd"
-                      }`,
+                            ? "#555"
+                            : "#ddd"
+                        }`,
                       borderRadius: "8px",
                       display: "flex",
                       alignItems: "center",
@@ -1071,15 +1055,14 @@ const SettingsPage: React.FC = () => {
                       style={{
                         width: "150px",
                         height: "80px",
-                        border: `2px solid ${
-                          selectedSignatureId === signature.id
+                        border: `2px solid ${selectedSignatureId === signature.id
                             ? isDarkMode
                               ? "#4c8dff"
                               : "#3880ff"
                             : isDarkMode
-                            ? "#555"
-                            : "#ddd"
-                        }`,
+                              ? "#555"
+                              : "#ddd"
+                          }`,
                         borderRadius: "8px",
                         position: "relative",
                         cursor: "pointer",
@@ -1257,15 +1240,14 @@ const SettingsPage: React.FC = () => {
                     style={{
                       width: "150px",
                       height: "80px",
-                      border: `2px solid ${
-                        selectedLogoId === null
+                      border: `2px solid ${selectedLogoId === null
                           ? isDarkMode
                             ? "#4c8dff"
                             : "#3880ff"
                           : isDarkMode
-                          ? "#555"
-                          : "#ddd"
-                      }`,
+                            ? "#555"
+                            : "#ddd"
+                        }`,
                       borderRadius: "8px",
                       display: "flex",
                       alignItems: "center",
@@ -1310,15 +1292,14 @@ const SettingsPage: React.FC = () => {
                       style={{
                         width: "150px",
                         height: "80px",
-                        border: `2px solid ${
-                          selectedLogoId === logo.id
+                        border: `2px solid ${selectedLogoId === logo.id
                             ? isDarkMode
                               ? "#4c8dff"
                               : "#3880ff"
                             : isDarkMode
-                            ? "#555"
-                            : "#ddd"
-                        }`,
+                              ? "#555"
+                              : "#ddd"
+                          }`,
                         borderRadius: "8px",
                         position: "relative",
                         cursor: "pointer",
@@ -2099,8 +2080,8 @@ const SettingsPage: React.FC = () => {
           toastMessage.includes("successful")
             ? "success"
             : toastMessage.includes("Maximum")
-            ? "warning"
-            : "danger"
+              ? "warning"
+              : "danger"
         }
       />
 
