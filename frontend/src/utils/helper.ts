@@ -207,34 +207,16 @@ export const getStorageManagementSuggestions = (
 };
 
 // User onboarding utilities
-const USER_ONBOARDING_KEY = "invoiceApp_isNewUser";
+// const USER_ONBOARDING_KEY = "invoiceApp_isNewUser";
 
 export const isNewUser = (): boolean => {
-  try {
-    const stored = localStorage.getItem(USER_ONBOARDING_KEY);
-    // If no value is stored, user is new
-    if (stored === null) {
-      return true;
-    }
-    return stored === "true";
-  } catch (error) {
-    // Error logged
-    return true; // Default to new user if localStorage fails
-  }
+  return true;
 };
 
 export const markUserAsExisting = (): void => {
-  try {
-    localStorage.setItem(USER_ONBOARDING_KEY, "false");
-  } catch (error) {
-    // Error logged
-  }
+  // No-op: Onboarding status is no longer stored
 };
 
 export const resetUserOnboarding = (): void => {
-  try {
-    localStorage.removeItem(USER_ONBOARDING_KEY);
-  } catch (error) {
-    // Error logged
-  }
+  // No-op: Onboarding status is no longer stored
 };

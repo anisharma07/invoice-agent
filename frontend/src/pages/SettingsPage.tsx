@@ -46,7 +46,6 @@ import Menu from "../components/Menu/Menu";
 import { useTheme } from "../contexts/ThemeContext";
 import { useHistory } from "react-router-dom";
 import { usePWA } from "../hooks/usePWA";
-import { resetUserOnboarding } from "../utils/helper";
 import { getAutoSaveEnabled, setAutoSaveEnabled } from "../utils/settings";
 import "./SettingsPage.css";
 
@@ -57,7 +56,6 @@ const SettingsPage: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showResetToast, setShowResetToast] = useState(false);
   const [globalAutoSaveEnabled, setGlobalAutoSaveEnabled] = useState(getAutoSaveEnabled());
 
   const { isInstallable, isInstalled, isOnline, installApp } = usePWA();
@@ -807,11 +805,6 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleResetOnboarding = () => {
-    resetUserOnboarding();
-    setShowResetToast(true);
-  };
-
   const handleAutoSaveToggle = (enabled: boolean) => {
     setGlobalAutoSaveEnabled(enabled);
     setAutoSaveEnabled(enabled);
@@ -880,13 +873,6 @@ const SettingsPage: React.FC = () => {
                       checked={globalAutoSaveEnabled}
                       onIonChange={(e) => handleAutoSaveToggle(e.detail.checked)}
                     />
-                  </IonItem>
-                  <IonItem button onClick={handleResetOnboarding}>
-                    <IonIcon icon={informationCircle} slot="start" />
-                    <IonLabel>
-                      <h3>Reset Onboarding</h3>
-                      <p>Show landing page on next visit</p>
-                    </IonLabel>
                   </IonItem>
                 </IonList>
               </IonCardContent>
@@ -1004,12 +990,12 @@ const SettingsPage: React.FC = () => {
                       width: "150px",
                       height: "80px",
                       border: `2px solid ${selectedSignatureId === null
-                          ? isDarkMode
-                            ? "#4c8dff"
-                            : "#3880ff"
-                          : isDarkMode
-                            ? "#555"
-                            : "#ddd"
+                        ? isDarkMode
+                          ? "#4c8dff"
+                          : "#3880ff"
+                        : isDarkMode
+                          ? "#555"
+                          : "#ddd"
                         }`,
                       borderRadius: "8px",
                       display: "flex",
@@ -1056,12 +1042,12 @@ const SettingsPage: React.FC = () => {
                         width: "150px",
                         height: "80px",
                         border: `2px solid ${selectedSignatureId === signature.id
-                            ? isDarkMode
-                              ? "#4c8dff"
-                              : "#3880ff"
-                            : isDarkMode
-                              ? "#555"
-                              : "#ddd"
+                          ? isDarkMode
+                            ? "#4c8dff"
+                            : "#3880ff"
+                          : isDarkMode
+                            ? "#555"
+                            : "#ddd"
                           }`,
                         borderRadius: "8px",
                         position: "relative",
@@ -1241,12 +1227,12 @@ const SettingsPage: React.FC = () => {
                       width: "150px",
                       height: "80px",
                       border: `2px solid ${selectedLogoId === null
-                          ? isDarkMode
-                            ? "#4c8dff"
-                            : "#3880ff"
-                          : isDarkMode
-                            ? "#555"
-                            : "#ddd"
+                        ? isDarkMode
+                          ? "#4c8dff"
+                          : "#3880ff"
+                        : isDarkMode
+                          ? "#555"
+                          : "#ddd"
                         }`,
                       borderRadius: "8px",
                       display: "flex",
@@ -1293,12 +1279,12 @@ const SettingsPage: React.FC = () => {
                         width: "150px",
                         height: "80px",
                         border: `2px solid ${selectedLogoId === logo.id
-                            ? isDarkMode
-                              ? "#4c8dff"
-                              : "#3880ff"
-                            : isDarkMode
-                              ? "#555"
-                              : "#ddd"
+                          ? isDarkMode
+                            ? "#4c8dff"
+                            : "#3880ff"
+                          : isDarkMode
+                            ? "#555"
+                            : "#ddd"
                           }`,
                         borderRadius: "8px",
                         position: "relative",
@@ -2083,16 +2069,6 @@ const SettingsPage: React.FC = () => {
               ? "warning"
               : "danger"
         }
-      />
-
-      {/* Toast for reset onboarding confirmation */}
-      <IonToast
-        isOpen={showResetToast}
-        onDidDismiss={() => setShowResetToast(false)}
-        message="Onboarding reset! Landing page will show on next visit."
-        duration={3000}
-        position="bottom"
-        color="success"
       />
     </IonPage>
   );
