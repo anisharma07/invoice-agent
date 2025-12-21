@@ -30,36 +30,27 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    // Check for saved theme preference or default to false
-    const savedTheme = localStorage.getItem("stark-invoice-dark-mode");
-    const prefersDark = savedTheme ? JSON.parse(savedTheme) : false;
-
-    setIsDarkMode(prefersDark);
-    applyTheme(prefersDark);
+    // Force light mode
+    setIsDarkMode(false);
+    applyTheme(false);
+    localStorage.removeItem("stark-invoice-dark-mode");
   }, []);
 
   const applyTheme = (isDark: boolean) => {
     const body = document.body;
     const html = document.documentElement;
 
-    if (isDark) {
-      body.classList.add("dark");
-      html.classList.add("ion-palette-dark");
-    } else {
-      body.classList.remove("dark");
-      html.classList.remove("ion-palette-dark");
-    }
+    // Always remove dark classes
+    body.classList.remove("dark");
+    html.classList.remove("ion-palette-dark");
   };
 
   const toggleDarkMode = () => {
-    const newDarkMode = !isDarkMode;
-    setDarkMode(newDarkMode);
+    // Do nothing
   };
 
   const setDarkMode = (isDark: boolean) => {
-    setIsDarkMode(isDark);
-    applyTheme(isDark);
-    localStorage.setItem("stark-invoice-dark-mode", JSON.stringify(isDark));
+    // Do nothing
   };
 
   const value = {

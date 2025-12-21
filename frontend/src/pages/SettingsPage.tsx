@@ -43,6 +43,7 @@ import {
 } from "ionicons/icons";
 import SignatureCanvas from "react-signature-canvas";
 import Menu from "../components/Menu/Menu";
+import ServiceManager from "../components/Settings/ServiceManager";
 import { useTheme } from "../contexts/ThemeContext";
 import { useHistory } from "react-router-dom";
 import { usePWA } from "../hooks/usePWA";
@@ -51,7 +52,8 @@ import "./SettingsPage.css";
 
 const SettingsPage: React.FC = () => {
   const [showMenu, setShowMenu] = useState(false);
-  const { isDarkMode, toggleDarkMode } = useTheme();
+  const { } = useTheme();
+  const isDarkMode = false;
   const history = useHistory();
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -953,6 +955,11 @@ const SettingsPage: React.FC = () => {
                 </IonList>
               </IonCardContent>
             </IonCard>
+          </div>
+
+          {/* Service Manager Section */}
+          <div className="signature-section" style={{ marginBottom: "20px" }}>
+            <ServiceManager />
           </div>
 
           {/* Signature Section */}

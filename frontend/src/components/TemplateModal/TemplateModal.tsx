@@ -30,6 +30,8 @@ import {
   timeOutline,
   folderOpenOutline,
   gridOutline,
+  heart,
+  heartOutline,
 } from "ionicons/icons";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useInvoice } from "../../contexts/InvoiceContext";
@@ -69,7 +71,7 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
   const [newFileName, setNewFileName] = useState("");
 
   // New tab-based state
-  const [activeTab, setActiveTab] = useState<"recent" | "yours" | "default">("recent");
+  const [activeTab, setActiveTab] = useState<"favourites" | "yours" | "default">("default");
 
   // Filter state
   const [templateFilter, setTemplateFilter] = useState<"all" | "web" | "mobile" | "tablet">("all");
@@ -81,7 +83,7 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
   const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
 
   // Data state
-  const [recentTemplates, setRecentTemplates] = useState<TemplateHistoryItem[]>([]);
+  const [favoriteTemplates, setFavoriteTemplates] = useState<number[]>([]);
   const [onlineInvoices, setOnlineInvoices] = useState<OnlineInvoiceItem[]>([]);
 
   const [isSmallScreen, setIsSmallScreen] = useState(false);
@@ -107,8 +109,10 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
 
   const loadTemplatesFromStorage = async () => {
     try {
-      const recent = await getRecentTemplates();
-      setRecentTemplates(recent);
+      const savedFavorites = localStorage.getItem('favoriteTemplates');
+      if (savedFavorites) {
+        setFavoriteTemplates(JSON.parse(savedFavorites));
+      }
 
       // Load online invoices imported from Invoice Store
       const online = await getOnlineInvoices();
@@ -116,6 +120,18 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
     } catch (error) {
       console.error("Error loading templates from storage:", error);
     }
+  };
+
+  const toggleFavorite = (e: React.MouseEvent, templateId: number) => {
+    e.stopPropagation();
+    let newFavorites;
+    if (favoriteTemplates.includes(templateId)) {
+      newFavorites = favoriteTemplates.filter(id => id !== templateId);
+    } else {
+      newFavorites = [...favoriteTemplates, templateId];
+    }
+    setFavoriteTemplates(newFavorites);
+    localStorage.setItem('favoriteTemplates', JSON.stringify(newFavorites));
   };
 
   // Initialize filters with all available options
@@ -217,7 +233,7 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
   // Reset template filter when modal closes
   const handleModalClose = () => {
     setTemplateFilter("all");
-    setActiveTab("recent"); // Reset to recent tab
+    setActiveTab("default"); // Reset to default tab
     setSelectedTemplateForFile(null);
     setNewFileName("");
     setShowFileNamePrompt(false);
@@ -314,9 +330,6 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
       );
       setShowToast(true);
 
-      // Add to recent templates only (Yours tab loads from LocalStorage)
-      await addToRecentTemplates(templateId, fileName);
-
       // Reset modal state
       setShowFileNamePrompt(false);
       setSelectedTemplateForFile(null);
@@ -359,6 +372,7 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
 
     // For recent/user templates, show file name
     const fileName = template.fileName || null;
+    const isFavorite = favoriteTemplates.includes(templateId);
 
     return (
       <div
@@ -386,6 +400,7 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
           alignItems: "center",
           gap: "12px",
           transition: "all 0.2s ease",
+          position: "relative"
         }}
         onMouseOver={(e) => {
           e.currentTarget.style.backgroundColor = isDarkMode
@@ -404,6 +419,26 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
             : "var(--ion-color-step-150)";
         }}
       >
+        {/* Favorite Button */}
+        <div
+          onClick={(e) => toggleFavorite(e, templateId)}
+          style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            zIndex: 10,
+            padding: '4px'
+          }}
+        >
+          <IonIcon
+            icon={isFavorite ? heart : heartOutline}
+            style={{
+              color: isFavorite ? '#eb445a' : 'var(--ion-color-medium)',
+              fontSize: '20px'
+            }}
+          />
+        </div>
+
         {/* Template Image */}
         <div
           style={{
@@ -528,6 +563,7 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
               ? "var(--ion-color-step-400)"
               : "var(--ion-color-step-350)",
             opacity: 0.7,
+            marginRight: '24px' // Make space for heart icon
           }}
         />
       </div>
@@ -536,6 +572,7 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
 
   const filteredTemplates = getFilteredTemplates();
   const categorized = getCategorizedTemplates();
+  const favoriteTemplatesList = tempMeta.filter(t => favoriteTemplates.includes(t.template_id));
 
   return (
     <>
@@ -563,7 +600,7 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
             <IonSegment
               value={activeTab}
               onIonChange={(e) =>
-                setActiveTab(e.detail.value as "recent" | "yours" | "default")
+                setActiveTab(e.detail.value as "favourites" | "yours" | "default")
               }
               style={{
                 background: isDarkMode
@@ -578,10 +615,10 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
                 marginBottom: "12px",
               }}
             >
-              <IonSegmentButton value="recent">
-                <IonIcon icon={timeOutline} style={{ fontSize: "16px" }} />
+              <IonSegmentButton value="favourites">
+                <IonIcon icon={heart} style={{ fontSize: "16px" }} />
                 <IonText style={{ fontSize: "12px", fontWeight: "500", marginLeft: "4px" }}>
-                  Recent ({recentTemplates.length})
+                  Favourites ({favoriteTemplates.length})
                 </IonText>
               </IonSegmentButton>
               <IonSegmentButton value="yours">
@@ -684,18 +721,18 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
 
           {/* Content based on active tab */}
           <div style={{ padding: "16px" }}>
-            {activeTab === "recent" && (
+            {activeTab === "favourites" && (
               <>
-                {recentTemplates.length === 0 ? (
+                {favoriteTemplatesList.length === 0 ? (
                   <IonText color="medium">
                     <p style={{ textAlign: "center", padding: "32px 16px" }}>
-                      No recent templates. Create a file to see it here.
+                      No favourite templates yet. Click the heart icon on any template to add it here.
                     </p>
                   </IonText>
                 ) : (
                   <div>
-                    {recentTemplates.map((template) =>
-                      renderTemplateItem(template, "recent", true)
+                    {favoriteTemplatesList.map((template) =>
+                      renderTemplateItem(template, "favourites", false)
                     )}
                   </div>
                 )}

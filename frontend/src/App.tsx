@@ -39,11 +39,11 @@ import "./App.css";
 setupIonicReact();
 
 const AppContent: React.FC = () => {
-  const { isDarkMode } = useTheme();
+  const { } = useTheme();
   const { isOnline } = usePWA();
 
   return (
-    <IonApp className={isDarkMode ? "dark-theme" : "light-theme"}>
+    <IonApp className="light-theme">
       <InvoiceProvider>
         <IonReactRouter>
           <IonRouterOutlet>

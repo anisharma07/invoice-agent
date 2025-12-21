@@ -4,6 +4,7 @@ import { menuOutline, personCircleOutline, sunny, moon, add } from 'ionicons/ico
 import { useHistory, useLocation } from 'react-router-dom';
 import DashboardSidebar from './DashboardSidebar';
 import { useTheme } from '../contexts/ThemeContext';
+import TemplateModal from './TemplateModal/TemplateModal';
 import './DashboardLayout.css';
 
 interface DashboardLayoutProps {
@@ -12,7 +13,8 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const { isDarkMode, toggleDarkMode } = useTheme();
+    const [showTemplateModal, setShowTemplateModal] = useState(false);
+    const { isDarkMode } = useTheme();
     const history = useHistory();
     const location = useLocation();
 
@@ -55,17 +57,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                         <IonButton
                             fill="solid"
                             color="primary"
-                            onClick={() => { }}
+                            onClick={() => setShowTemplateModal(true)}
                             style={{ marginRight: '8px' }}
                         >
                             <IonIcon icon={add} slot="start" />
                             Create
-                        </IonButton>
-                        <IonButton
-                            fill="clear"
-                            onClick={toggleDarkMode}
-                        >
-                            <IonIcon icon={isDarkMode ? sunny : moon} />
                         </IonButton>
                         <IonButton fill="clear">
                             <IonIcon icon={personCircleOutline} slot="icon-only" />
@@ -77,6 +73,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                     {children}
                 </div>
             </div>
+
+            <TemplateModal
+                isOpen={showTemplateModal}
+                onClose={() => setShowTemplateModal(false)}
+            />
         </div>
     );
 };

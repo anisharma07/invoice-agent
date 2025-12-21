@@ -69,7 +69,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, onClose }) 
         <div className={`dashboard-sidebar ${isOpen ? 'open' : ''} ${isDarkMode ? 'dark-theme' : ''}`}>
             <div className="sidebar-header">
                 <img src="/favicon.png" alt="Logo" className="sidebar-logo" />
-                <span className="sidebar-title">Invoice App</span>
+                <span className="sidebar-title">Invoice Calc</span>
             </div>
 
             <div className="sidebar-menu">
