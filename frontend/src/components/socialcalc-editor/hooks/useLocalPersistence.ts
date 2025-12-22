@@ -7,6 +7,7 @@ export interface UseLocalPersistenceOptions {
   autoSave?: boolean;
   autoSaveInterval?: number;
   storageKey?: string;
+  skipInitialLoad?: boolean;
 }
 
 export interface UseLocalPersistenceReturn {
@@ -16,9 +17,6 @@ export interface UseLocalPersistenceReturn {
   hasLocalData: () => boolean;
 }
 
-/**
- * Hook for persisting spreadsheet data to localStorage
- */
 export function useLocalPersistence(
   getSheetData: () => string | null,
   loadSheetData: (data: string) => void,
@@ -28,6 +26,7 @@ export function useLocalPersistence(
     autoSave = true,
     autoSaveInterval = AUTO_SAVE_INTERVAL,
     storageKey = STORAGE_KEY,
+    skipInitialLoad = false,
   } = options;
 
   const hasInitializedRef = useRef(false);
@@ -76,7 +75,7 @@ export function useLocalPersistence(
 
   // Load saved data on initial mount (only once)
   useEffect(() => {
-    if (hasInitializedRef.current) {
+    if (hasInitializedRef.current || skipInitialLoad) {
       return;
     }
 
@@ -91,7 +90,7 @@ export function useLocalPersistence(
     }
 
     hasInitializedRef.current = true;
-  }, [loadFromLocal, loadSheetData]);
+  }, [loadFromLocal, loadSheetData, skipInitialLoad]);
 
   // Auto-save on interval
   useEffect(() => {

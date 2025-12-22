@@ -1,0 +1,6 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Chain/link icon -->
+  <path d="M9 7L11.5 4.5C12.3284 3.67157 13.6716 3.67157 14.5 4.5C15.3284 5.32843 15.3284 6.67157 14.5 7.5L12 10" stroke="#333" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M7 9L4.5 11.5C3.67157 12.3284 2.32843 12.3284 1.5 11.5C0.671573 10.6716 0.671573 9.32843 1.5 8.5L4 6" stroke="#333" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M6 10L10 6" stroke="#333" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

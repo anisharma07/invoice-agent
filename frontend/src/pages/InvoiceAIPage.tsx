@@ -1,68 +1,61 @@
-import { useState, useCallback, useRef } from 'react';
-import { IonContent, IonPage } from '@ionic/react';
+import { useState, useCallback, useEffect } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
 import { SpreadsheetContainer, type SpreadsheetAPI, AIChat, PDFExportModal, type PDFSettings } from '../components/socialcalc-editor';
 import { agentService } from '../components/socialcalc-editor/services/agentService';
 import { pdfService } from '../components/socialcalc-editor/services/pdfService';
 import './InvoiceAIPage.css';
+import { DATA } from '../templates';
 
 const InvoiceAIPage: React.FC = () => {
     const [spreadsheetApi, setSpreadsheetApi] = useState<SpreadsheetAPI | null>(null);
-    const [lastSaved, setLastSaved] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [templateName, setTemplateName] = useState<string>('Template');
+    const { templateId } = useParams<{ templateId?: string }>();
+    const location = useLocation<{ mscCode?: string; templateId?: number }>();
+
+    useEffect(() => {
+        if (!spreadsheetApi) return;
+
+        // priority 1: URL parameter
+        if (templateId) {
+            console.log('Loading template from URL param:', templateId);
+            const tid = parseInt(templateId, 10);
+            const templateData = DATA[tid];
+            if (templateData && templateData.msc) {
+                // Set template name (use category as fallback if name doesn't exist)
+                setTemplateName((templateData as any).name || templateData.category || `Template ${tid}`);
+                const currentSheetId = templateData.msc.currentid;
+                const mscCode = templateData.msc.sheetArr[currentSheetId]?.sheetstr?.savestr;
+                if (mscCode) {
+                    try {
+                        spreadsheetApi.loadData(mscCode);
+                    } catch (err) {
+                        console.error('Error loading template from URL:', err);
+                        alert('Failed to load template data.');
+                    }
+                }
+            } else {
+                console.error('Template not found:', tid);
+            }
+        }
+        // priority 2: Navigation state (legacy support or if used elsewhere)
+        else if (location.state?.mscCode) {
+            console.log('Loading template from navigation state:', location.state.templateId);
+            try {
+                spreadsheetApi.loadData(location.state.mscCode);
+            } catch (err) {
+                console.error('Error loading template MSC:', err);
+            }
+        }
+    }, [spreadsheetApi, templateId, location.state]);
+
+
 
     const handleReady = useCallback((api: SpreadsheetAPI) => {
         setSpreadsheetApi(api);
         console.log('Spreadsheet is ready!');
-    }, []);
-
-    const handleSaveNow = useCallback(() => {
-        if (spreadsheetApi) {
-            spreadsheetApi.saveToLocal();
-            setLastSaved(new Date().toLocaleTimeString());
-        }
-    }, [spreadsheetApi]);
-
-    const handleClearData = useCallback(() => {
-        if (spreadsheetApi && window.confirm('Are you sure you want to clear all saved data?')) {
-            spreadsheetApi.clearLocal();
-            window.location.reload();
-        }
-    }, [spreadsheetApi]);
-
-    const handleImportClick = useCallback(() => {
-        fileInputRef.current?.click();
-    }, []);
-
-    const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const content = e.target?.result as string;
-            if (content) {
-                try {
-                    // Get SocialCalc from window
-                    const SC = (window as any).SocialCalc;
-                    if (SC && SC.WorkBookControlLoad) {
-                        SC.WorkBookControlLoad(content);
-                        console.log('MSC file loaded successfully');
-                    } else {
-                        alert('SocialCalc is not ready. Please try again.');
-                    }
-                } catch (err) {
-                    console.error('Failed to load MSC file:', err);
-                    alert('Failed to load file. Make sure it is a valid .msc file.');
-                }
-            }
-        };
-        reader.readAsText(file);
-
-        // Reset file input so same file can be selected again
-        event.target.value = '';
     }, []);
 
     const handleAIGenerate = useCallback(async (prompt: string) => {
@@ -123,7 +116,6 @@ const InvoiceAIPage: React.FC = () => {
             // Save to local storage
             setTimeout(() => {
                 spreadsheetApi.saveToLocal();
-                setLastSaved(new Date().toLocaleTimeString());
             }, 500);
 
             console.log('AI-generated code applied successfully');
@@ -190,28 +182,11 @@ const InvoiceAIPage: React.FC = () => {
 
             <div className="invoice-ai-app">
                 <header className="invoice-ai-header">
-                    <h1>SocialCalc Spreadsheet</h1>
+                    <h1>Editing Template: {templateName}</h1>
                     <div className="header-actions">
-                        <button onClick={handleImportClick} disabled={!spreadsheetApi}>
-                            Import MSC
-                        </button>
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleFileChange}
-                            accept=".msc,.txt"
-                            style={{ display: 'none' }}
-                        />
-                        <button onClick={handleSaveNow} disabled={!spreadsheetApi}>
-                            Save Now
-                        </button>
                         <button onClick={handleOpenPDFModal} disabled={!spreadsheetApi}>
                             Export PDF
                         </button>
-                        <button onClick={handleClearData} disabled={!spreadsheetApi} className="danger">
-                            Clear Data
-                        </button>
-                        {lastSaved && <span className="last-saved">Last saved: {lastSaved}</span>}
                     </div>
                 </header>
                 <main className="invoice-ai-main">
@@ -223,6 +198,7 @@ const InvoiceAIPage: React.FC = () => {
                         onReady={handleReady}
                         autoSave={true}
                         autoSaveInterval={30000}
+                        skipInitialLoad={!!templateId || !!location.state?.mscCode}
                     />
                     <AIChat onGenerate={handleAIGenerate} isLoading={isGenerating} />
                 </main>

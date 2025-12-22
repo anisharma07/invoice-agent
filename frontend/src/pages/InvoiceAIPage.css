@@ -6,7 +6,7 @@
   overflow: hidden;
 }
 
-.app-header {
+.invoice-ai-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -16,7 +16,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.app-header h1 {
+.invoice-ai-header h1 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 500;
@@ -216,4 +216,38 @@ div[id*="clipboardtools"] select,
 div[id*="clipboardtools"] input[type="button"],
 div[id*="clipboardtools"] textarea {
   background-color: #fff;
+}
+
+/* Broader fix for SocialCalc inputs including Format/Font toolbar */
+#tableeditor input,
+#tableeditor select,
+#tableeditor textarea,
+#workbookControl input,
+#workbookControl select,
+#workbookControl textarea,
+div[id*="formattools"] input,
+div[id*="formattools"] select,
+div[id*="formattools"] textarea,
+div[id*="fonttools"] input,
+div[id*="fonttools"] select,
+div[id*="fonttools"] textarea,
+div[id*="tools"] input,
+div[id*="tools"] select,
+div[id*="tools"] textarea {
+  background-color: #fff !important;
+  color: #000 !important;
+  border: 1px solid #ccc !important;
+  font-size: 11px !important;
+  padding: 1px 2px !important;
+  height: auto !important;
+  min-height: 20px !important;
+}
+
+/* Ensure dropdown options are also visible */
+#tableeditor option,
+#workbookControl option,
+div[id*="tools"] option {
+  background-color: #fff !important;
+  color: #000 !important;
+  font-size: 11px !important;
 }

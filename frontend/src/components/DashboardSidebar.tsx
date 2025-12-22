@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useHistory } from 'react-router-dom';
 import { IonIcon, IonFooter } from '@ionic/react';
-import { homeOutline, folderOutline, briefcaseOutline, settingsOutline, homeSharp, folderSharp, briefcaseSharp, settingsSharp, storefrontOutline, storefrontSharp, documentTextOutline, documentTextSharp } from 'ionicons/icons';
+import { homeOutline, personCircleOutline, personCircleSharp, briefcaseOutline, settingsOutline, homeSharp, folderSharp, briefcaseSharp, settingsSharp, storefrontOutline, storefrontSharp, documentTextOutline, documentTextSharp } from 'ionicons/icons';
 import { useTheme } from '../contexts/ThemeContext';
 import './DashboardLayout.css';
 
@@ -23,22 +23,10 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, onClose }) 
             activeIcon: homeSharp
         },
         {
-            title: 'Files',
-            path: '/app/dashboard/files',
-            icon: folderOutline,
-            activeIcon: folderSharp
-        },
-        {
-            title: 'Templates',
-            path: '/app/dashboard/templates',
+            title: 'Invoices',
+            path: '/app/dashboard/invoices',
             icon: documentTextOutline,
             activeIcon: documentTextSharp
-        },
-        {
-            title: 'Store',
-            path: '/app/dashboard/store',
-            icon: storefrontOutline,
-            activeIcon: storefrontSharp
         },
         {
             title: 'Jobs',
@@ -47,10 +35,22 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, onClose }) 
             activeIcon: briefcaseSharp
         },
         {
+            title: 'Templates',
+            path: '/app/dashboard/templates',
+            icon: storefrontOutline,
+            activeIcon: storefrontSharp
+        },
+        {
             title: 'Settings',
             path: '/app/dashboard/settings',
             icon: settingsOutline,
             activeIcon: settingsSharp
+        },
+        {
+            title: 'Account',
+            path: '/app/dashboard/account',
+            icon: personCircleOutline,
+            activeIcon: personCircleSharp
         }
     ];
 

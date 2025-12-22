@@ -17,6 +17,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -41,6 +42,7 @@
     transform: translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -78,6 +80,33 @@
   background-color: #f1f3f4;
 }
 
+/* Header Actions */
+.pdf-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Full-frame PDF Preview */
+.pdf-preview-fullframe {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
+  margin: 0;
+  background: #525659;
+}
+
+.pdf-preview-embed-fullframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+}
+
 /* Modal Body */
 .pdf-modal-body {
   display: flex;
@@ -113,13 +142,14 @@
 }
 
 .pdf-zoom-controls button {
-  padding: 4px 12px;
+  padding: 4px;
+  /* Reduced padding for icons */
   border: 1px solid #dadce0;
   background: #fff;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
+  color: #5f6368;
+  /* Ensure icon color is visible */
   transition: all 0.2s;
   min-width: 32px;
   height: 32px;
@@ -131,31 +161,17 @@
 .pdf-zoom-controls button:hover:not(:disabled) {
   background: #f8f9fa;
   border-color: #1a73e8;
+  color: #1a73e8;
+  /* Change icon color on hover */
 }
 
-.pdf-zoom-controls button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.pdf-zoom-level {
-  font-size: 13px;
-  font-weight: 500;
-  color: #202124;
-  min-width: 45px;
-  text-align: center;
-}
-
-.pdf-zoom-reset {
-  font-size: 12px !important;
-  font-weight: 500 !important;
-  padding: 4px 8px !important;
-}
+/* ... existing styles ... */
 
 .pdf-preview-container {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  /* changed from center to allow scrolling from top */
   justify-content: center;
   padding: 24px;
   overflow: auto;
@@ -166,8 +182,14 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   border-radius: 4px;
   position: relative;
-  transform-origin: center;
+  /* transform-origin removed here, handled inline */
   transition: transform 0.3s ease;
+  overflow: hidden;
+  /* Ensure no internal scrollbars */
+  flex-shrink: 0;
+  /* Prevent shrinking */
+  margin: 0 auto;
+  /* Center horizontally */
 }
 
 .pdf-preview-page.portrait {
@@ -178,6 +200,23 @@
 .pdf-preview-page.landscape {
   width: 842px;
   height: 595px;
+}
+
+/* PDF Embed Preview Styles */
+.pdf-preview-wrapper {
+  width: 600px;
+  height: 800px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.pdf-preview-embed {
+  width: 100%;
+  height: 100%;
+  border: none;
 }
 
 .pdf-preview-content {
@@ -224,6 +263,7 @@
 .pdf-settings-panel {
   width: 320px;
   overflow-y: auto;
+  color-scheme: light;
   padding: 24px;
   background: #fff;
 }
@@ -310,16 +350,16 @@
   pointer-events: none;
 }
 
-.pdf-radio-label input[type='radio']:checked + .pdf-radio-icon {
+.pdf-radio-label input[type='radio']:checked+.pdf-radio-icon {
   color: #1a73e8;
 }
 
-.pdf-radio-label input[type='radio']:checked ~ span {
+.pdf-radio-label input[type='radio']:checked~span {
   color: #1a73e8;
   font-weight: 500;
 }
 
-.pdf-radio-label input[type='radio']:checked + .pdf-radio-icon + span + .pdf-radio-label {
+.pdf-radio-label input[type='radio']:checked+.pdf-radio-icon+span+.pdf-radio-label {
   border-color: #1a73e8;
   background-color: #e8f0fe;
 }
@@ -341,19 +381,29 @@
 
 /* Checkbox */
 .pdf-checkbox-label {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
   font-size: 13px;
   color: #202124;
+  line-height: 1;
 }
 
 .pdf-checkbox-label input[type='checkbox'] {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  margin-right: 10px;
+  padding: 0;
+  flex-shrink: 0;
   cursor: pointer;
   accent-color: #1a73e8;
+  -webkit-appearance: checkbox;
+  appearance: checkbox;
+  background-color: #fff;
+  color-scheme: light;
+  vertical-align: middle;
 }
 
 /* Scale Control */
@@ -437,6 +487,8 @@
   border-radius: 4px;
   font-size: 13px;
   width: 60px;
+  background-color: #fff;
+  color: #333;
 }
 
 .pdf-margin-control input[type='number']:focus {
@@ -545,6 +597,7 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

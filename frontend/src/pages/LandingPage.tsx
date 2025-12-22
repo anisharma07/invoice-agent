@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   IonButton,
   IonContent,
@@ -37,20 +37,31 @@ import {
   peopleOutline,
   timeOutline,
   walletOutline,
+  closeCircleOutline,
+  alertCircleOutline,
 } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 import { useTheme } from "../contexts/ThemeContext";
 import { markUserAsExisting } from "../utils/helper";
+import { motion, useScroll, useTransform } from "framer-motion";
 import "./LandingPage.css";
 
 const LandingPage: React.FC = () => {
   const { isDarkMode } = useTheme();
   const history = useHistory();
+  const targetRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const { scrollYProgress } = useScroll({
+    target: targetRef,
+    offset: ["start end", "end start"],
+  });
+
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [0, 1]);
+  const scale = useTransform(scrollYProgress, [0, 0.5], [0.8, 1]);
 
   const handleGetStarted = () => {
     try {
-      markUserAsExisting();
-      history.replace("/app/files");
+      history.push("/app/dashboard/home");
     } catch (error) {
       console.error("Error in handleGetStarted:", error);
     }
@@ -58,9 +69,12 @@ const LandingPage: React.FC = () => {
 
   return (
     <IonPage className={`landing-page ${isDarkMode ? "dark" : ""}`}>
-      <IonHeader className="ion-no-border">
+      <IonHeader className={`ion-no-border ${isScrolled ? 'scrolled' : ''}`}>
         <IonToolbar className="landing-toolbar">
-          <IonTitle className="logo-text">InviSheet</IonTitle>
+          <div className="logo-container" slot="start">
+            <img src="/favicon.png" alt="Invoice Calc Logo" className="header-logo" />
+            <IonTitle className="logo-text">Invoice Calc</IonTitle>
+          </div>
           <div slot="end" className="desktop-nav ion-hide-sm-down">
             <IonButton fill="clear" color="dark">Solution</IonButton>
             <IonButton fill="clear" color="dark">Pricing</IonButton>
@@ -72,37 +86,71 @@ const LandingPage: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent fullscreen>
+      <IonContent fullscreen scrollEvents={true} onIonScroll={(e) => setIsScrolled(e.detail.scrollTop > 50)}>
         {/* Hero Section */}
         <section className="hero-section">
           <div className="hero-content">
             <IonGrid>
-              <IonRow className="ion-align-items-center">
-                <IonCol size="12" sizeMd="6" className="hero-text-col">
-                  <h1 className="hero-title">
-                    AI-rich invoicing, <br />
-                    <span className="highlight">powered by spreadsheets</span>
-                  </h1>
-                  <p className="hero-subtitle">
-                    Manage your business globally with InviSheet. Experience automated workflows,
-                    AI-driven invoice editing, and the flexibility of spreadsheets in one powerful app.
-                  </p>
+              <IonRow className="ion-align-items-center ion-justify-content-center text-center">
+                <IonCol size="12" sizeMd="10" className="hero-text-col">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8 }}
+                  >
+                    <h1 className="hero-title">
+                      Invoicing solutions, <br />
+                      built on spreadsheets <br />
+                      <span className="highlight">powered with AI</span>
+                    </h1>
+                    <p className="hero-subtitle">
+                      The only AI invoice system that thinks in spreadsheets, not PDFs.
+                    </p>
 
-                  <div className="cta-buttons">
-                    <IonButton
-                      size="large"
-                      expand="block"
-                      className="primary-cta"
-                      onClick={handleGetStarted}
-                    >
-                      Download InviSheet Now
-                      <IonIcon slot="end" icon={arrowForward} />
-                    </IonButton>
-                    <IonText color="medium" className="trial-text">
-                      <small>Free for small businesses • No credit card required</small>
-                    </IonText>
-                  </div>
+                    <div className="cta-buttons">
+                      <IonButton
+                        size="large"
+                        expand="block"
+                        className="primary-cta"
+                        onClick={handleGetStarted}
+                      >
+                        Try Now
+                        <IonIcon slot="end" icon={arrowForward} />
+                      </IonButton>
+                      <IonText color="medium" className="trial-text">
+                        <small>Try out the product without signing in</small>
+                      </IonText>
+                    </div>
+                  </motion.div>
+                </IonCol>
+              </IonRow>
 
+              {/* Dashboard Preview with Scroll Effect */}
+              <IonRow className="ion-justify-content-center dashboard-preview-row">
+                <IonCol size="12" sizeMd="10">
+                  <motion.div
+                    className="dashboard-preview-container"
+                    initial={{ opacity: 0, y: 100 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1, delay: 0.2 }}
+                  >
+                    <div className="dashboard-frame">
+                      <div className="browser-header">
+                        <div className="dots">
+                          <span className="dot red"></span>
+                          <span className="dot yellow"></span>
+                          <span className="dot green"></span>
+                        </div>
+                        <div className="address-bar">invoicecalc.com/dashboard</div>
+                      </div>
+                      <img src="/images/dashboard.png" alt="Dashboard Preview" className="dashboard-img-placeholder" />
+                    </div>
+                  </motion.div>
+                </IonCol>
+              </IonRow>
+
+              <IonRow className="ion-justify-content-center stats-row">
+                <IonCol size="12" sizeMd="8">
                   <div className="hero-stats">
                     <div className="stat-item">
                       <IonIcon icon={peopleOutline} />
@@ -120,25 +168,95 @@ const LandingPage: React.FC = () => {
                     </div>
                   </div>
                 </IonCol>
-                <IonCol size="12" sizeMd="6" className="hero-image-col">
-                  {/* Placeholder for Hero Image - could be an SVG or screenshot */}
-                  <div className="hero-image-placeholder">
-                    <IonIcon icon={documentTextOutline} className="floating-icon main" />
-                    <IonIcon icon={flashOutline} className="floating-icon sub-1" />
-                    <IonIcon icon={createOutline} className="floating-icon sub-2" />
-                  </div>
-                </IonCol>
               </IonRow>
-            </IonGrid>
-          </div>
-        </section>
+            </IonGrid >
+          </div >
+        </section >
 
-        {/* Key Features Grid */}
-        <section className="features-section">
+        {/* Comparison Table Section */}
+        <section className="comparison-section" ref={targetRef}>
           <IonGrid>
             <IonRow>
               <IonCol size="12" className="section-header">
-                <h2>Why Choose InviSheet?</h2>
+                <h2>Why Choose Us</h2>
+                <p>See how Invoice Calc stacks up against the competition.</p>
+              </IonCol>
+            </IonRow>
+            <IonRow className="ion-justify-content-center">
+              <IonCol size="12" sizeMd="12">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5 }}
+                  className="comparison-table-container"
+                >
+                  <table className="comparison-table">
+                    <thead>
+                      <tr>
+                        <th className="highlight-col">We Offer (Spreadsheet + AI)</th>
+                        <th>Traditional Invoice Apps</th>
+                        <th>Google Sheets / Excel</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="highlight-col"><IonIcon icon={checkmarkCircle} color="success" /> Built-in Spreadsheet (cell-level control)</td>
+                        <td><IonIcon icon={closeCircleOutline} color="danger" /> No (form-based)</td>
+                        <td><IonIcon icon={checkmarkCircle} color="success" /> Yes</td>
+                      </tr>
+                      <tr>
+                        <td className="highlight-col"><IonIcon icon={checkmarkCircle} color="success" /> Native formulas (GST, totals, discounts, FX)</td>
+                        <td><IonIcon icon={alertCircleOutline} color="warning" /> Limited</td>
+                        <td><IonIcon icon={checkmarkCircle} color="success" /> Yes</td>
+                      </tr>
+                      <tr>
+                        <td className="highlight-col"><IonIcon icon={checkmarkCircle} color="success" /> AI generates editable spreadsheet invoices</td>
+                        <td><IonIcon icon={closeCircleOutline} color="danger" /> No</td>
+                        <td><IonIcon icon={closeCircleOutline} color="danger" /> No</td>
+                      </tr>
+                      <tr>
+                        <td className="highlight-col"><IonIcon icon={checkmarkCircle} color="success" /> Edit rows, cells, formulas via AI prompts</td>
+                        <td><IonIcon icon={closeCircleOutline} color="danger" /> No</td>
+                        <td><IonIcon icon={closeCircleOutline} color="danger" /> No</td>
+                      </tr>
+                      <tr>
+                        <td className="highlight-col"><IonIcon icon={checkmarkCircle} color="success" /> Fully customizable at cell & formula level</td>
+                        <td><IonIcon icon={alertCircleOutline} color="warning" /> Locked templates</td>
+                        <td><IonIcon icon={checkmarkCircle} color="success" /> High</td>
+                      </tr>
+                      <tr>
+                        <td className="highlight-col"><IonIcon icon={checkmarkCircle} color="success" /> Invoice, Proforma, GST, Packing Slip, Sales Order</td>
+                        <td><IonIcon icon={alertCircleOutline} color="warning" /> Limited</td>
+                        <td><IonIcon icon={alertCircleOutline} color="warning" /> Manual</td>
+                      </tr>
+                      <tr>
+                        <td className="highlight-col"><IonIcon icon={checkmarkCircle} color="success" /> Transparent & auditable formulas</td>
+                        <td><IonIcon icon={alertCircleOutline} color="warning" /> Black-box</td>
+                        <td><IonIcon icon={alertCircleOutline} color="warning" /> Manual</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </motion.div>
+              </IonCol>
+            </IonRow>
+
+            <IonRow className="ion-justify-content-center ion-margin-top">
+              <IonCol size="12" sizeMd="10" className="ion-text-center">
+                <h3 style={{ fontWeight: 600, color: 'var(--ion-color-dark)', marginTop: '2rem', fontSize: '1.5rem' }}>
+                  Generate invoices you can compute, edit, audit, and automate
+                </h3>
+              </IonCol>
+            </IonRow>
+          </IonGrid>
+        </section>
+
+        {/* Key Features Grid */}
+        < section className="features-section" >
+          <IonGrid>
+            <IonRow>
+              <IonCol size="12" className="section-header">
+                <h2>Why Choose Invoice Calc?</h2>
                 <p>The ultimate invoicing solution for the modern global business.</p>
               </IonCol>
             </IonRow>
@@ -189,10 +307,10 @@ const LandingPage: React.FC = () => {
               </IonCol>
             </IonRow>
           </IonGrid>
-        </section>
+        </section >
 
         {/* Detailed Feature: AI Editing */}
-        <section className="detail-section alt-bg">
+        < section className="detail-section alt-bg" >
           <IonGrid>
             <IonRow className="ion-align-items-center">
               <IonCol size="12" sizeMd="6">
@@ -200,7 +318,7 @@ const LandingPage: React.FC = () => {
                   <IonChip color="primary">New</IonChip>
                   <h2>Invoice Editing with AI</h2>
                   <p>
-                    Forget complex menus. With InviSheet, simply tell the AI what to change.
+                    Forget complex menus. With Invoice Calc, simply tell the AI what to change.
                     "Add a 10% discount", "Change currency to USD", or "Update the due date".
                     It's like having a personal assistant for your billing.
                   </p>
@@ -219,10 +337,10 @@ const LandingPage: React.FC = () => {
               </IonCol>
             </IonRow>
           </IonGrid>
-        </section>
+        </section >
 
         {/* Detailed Feature: Automated Workflows */}
-        <section className="detail-section">
+        < section className="detail-section" >
           <IonGrid>
             <IonRow className="ion-align-items-center reverse-col">
               <IonCol size="12" sizeMd="6">
@@ -234,7 +352,7 @@ const LandingPage: React.FC = () => {
                 <div className="detail-content">
                   <h2>Automated Workflows</h2>
                   <p>
-                    Stop doing repetitive tasks manually. InviSheet automates your billing cycle
+                    Stop doing repetitive tasks manually. Invoice Calc automates your billing cycle
                     from generation to follow-up.
                   </p>
                   <ul className="feature-list">
@@ -247,17 +365,17 @@ const LandingPage: React.FC = () => {
               </IonCol>
             </IonRow>
           </IonGrid>
-        </section>
+        </section >
 
         {/* Global Focus Section */}
-        <section className="detail-section alt-bg">
+        < section className="detail-section alt-bg" >
           <IonGrid>
             <IonRow className="ion-align-items-center">
               <IonCol size="12" sizeMd="6">
                 <div className="detail-content">
                   <h2>Built for Global Business</h2>
                   <p>
-                    Whether you are in New York, London, or Tokyo, InviSheet adapts to your needs.
+                    Whether you are in New York, London, or Tokyo, Invoice Calc adapts to your needs.
                     Multi-currency support, customizable tax rules, and global invoice templates.
                   </p>
                   <ul className="feature-list">
@@ -274,10 +392,10 @@ const LandingPage: React.FC = () => {
               </IonCol>
             </IonRow>
           </IonGrid>
-        </section>
+        </section >
 
         {/* FAQ Section */}
-        <section className="faq-section">
+        < section className="faq-section" >
           <IonGrid>
             <IonRow>
               <IonCol size="12" className="section-header">
@@ -289,10 +407,10 @@ const LandingPage: React.FC = () => {
                 <IonAccordionGroup>
                   <IonAccordion value="first">
                     <IonItem slot="header" color="light">
-                      <IonLabel>Is InviSheet free to use?</IonLabel>
+                      <IonLabel>Is Invoice Calc free to use?</IonLabel>
                     </IonItem>
                     <div className="ion-padding" slot="content">
-                      Yes, InviSheet offers a comprehensive free tier for small businesses and freelancers.
+                      Yes, Invoice Calc offers a comprehensive free tier for small businesses and freelancers.
                       Premium features are available for larger teams and advanced automation needs.
                     </div>
                   </IonAccordion>
@@ -310,7 +428,7 @@ const LandingPage: React.FC = () => {
                       <IonLabel>Can I use it on multiple devices?</IonLabel>
                     </IonItem>
                     <div className="ion-padding" slot="content">
-                      Absolutely. InviSheet syncs across all your devices - mobile, tablet, and desktop,
+                      Absolutely. Invoice Calc syncs across all your devices - mobile, tablet, and desktop,
                       so you can invoice from anywhere.
                     </div>
                   </IonAccordion>
@@ -318,15 +436,15 @@ const LandingPage: React.FC = () => {
               </IonCol>
             </IonRow>
           </IonGrid>
-        </section>
+        </section >
 
         {/* Footer */}
-        <IonFooter className="landing-footer">
+        < IonFooter className="landing-footer" >
           <IonGrid>
             <IonRow>
               <IonCol size="12" sizeMd="4">
-                <h3>InviSheet</h3>
-                <p>AI-rich invoicing, powered by spreadsheets.</p>
+                <h3>Invoice Calc</h3>
+                <p>Invoicing solutions, powered by spreadsheets.</p>
                 <div className="social-links">
                   <IonIcon icon={logoGooglePlaystore} />
                   <IonIcon icon={desktopOutline} />
@@ -351,19 +469,19 @@ const LandingPage: React.FC = () => {
               </IonCol>
               <IonCol size="12" sizeMd="4">
                 <h5>Contact</h5>
-                <p>support@invisheet.com</p>
-                <p>1-800-INVISHEET</p>
+                <p>support@invoicecalc.com</p>
+                <p>1-800-INVOICECALC</p>
               </IonCol>
             </IonRow>
             <IonRow>
               <IonCol size="12" className="copyright">
-                <p>© 2025 InviSheet. All rights reserved.</p>
+                <p>© 2025 Invoice Calc. All rights reserved.</p>
               </IonCol>
             </IonRow>
           </IonGrid>
-        </IonFooter>
-      </IonContent>
-    </IonPage>
+        </IonFooter >
+      </IonContent >
+    </IonPage >
   );
 };
 

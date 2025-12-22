@@ -6,9 +6,9 @@ import {
 import Files from "../components/Files/Files";
 import { useTheme } from "../contexts/ThemeContext";
 import { useInvoice } from "../contexts/InvoiceContext";
-import "./FilesPage.css";
+import "./InvoicesPage.css";
 
-const FilesPage: React.FC = () => {
+const InvoicesPage: React.FC = () => {
   const { isDarkMode } = useTheme();
   const { selectedFile, store, updateSelectedFile, updateBillType } = useInvoice();
 
@@ -31,4 +31,4 @@ const FilesPage: React.FC = () => {
   );
 };
 
-export default FilesPage;
+export default InvoicesPage;

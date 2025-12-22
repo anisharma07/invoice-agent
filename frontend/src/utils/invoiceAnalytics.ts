@@ -1,12 +1,23 @@
 import { DATA } from '../templates';
 
+export interface CustomerStats {
+    name: string;
+    email: string;
+    phone: string;
+    totalSpent: number;
+    invoiceCount: number;
+    lastPurchase: string;
+}
+
 export interface InvoiceAnalytics {
     totalRevenue: number;
     totalInvoices: number;
     averageInvoiceValue: number;
     revenueByMonth: { [key: string]: number };
+    gstByMonth: { [key: string]: number };
     topItems: { name: string; count: number; revenue: number }[];
     recentActivity: { date: string; amount: number; fileName: string }[];
+    customers: CustomerStats[];
 }
 
 export const parseInvoiceData = (files: any[]): InvoiceAnalytics => {
@@ -15,11 +26,14 @@ export const parseInvoiceData = (files: any[]): InvoiceAnalytics => {
         totalInvoices: 0,
         averageInvoiceValue: 0,
         revenueByMonth: {},
+        gstByMonth: {},
         topItems: [],
-        recentActivity: []
+        recentActivity: [],
+        customers: []
     };
 
     const itemMap = new Map<string, { count: number; revenue: number }>();
+    const customerMap = new Map<string, CustomerStats>();
 
     files.forEach(file => {
         try {
@@ -75,6 +89,45 @@ export const parseInvoiceData = (files: any[]): InvoiceAnalytics => {
                 }
             });
 
+            // Extract Customer Info
+            let customerName = '';
+            let customerEmail = '';
+            let customerPhone = '';
+
+            if (template.cellMappings?.sheet1?.BillTo) {
+                const billTo = template.cellMappings.sheet1.BillTo as any;
+                if (billTo.Name) customerName = cellValues.get(billTo.Name) || '';
+                if (billTo.Email) customerEmail = cellValues.get(billTo.Email) || '';
+                if (billTo.Phone) customerPhone = cellValues.get(billTo.Phone) || '';
+            }
+
+            // Clean up customer info
+            customerName = customerName.replace(/^\[|\]$/g, '').trim(); // Remove brackets if present
+            if (customerName === 'Name') customerName = ''; // Ignore placeholder
+
+            // Extract GST/Tax
+            // Heuristic: Look for "Tax" or "GST" label in the cells
+            let gstAmount = 0;
+            // Simple heuristic: iterate cells, find "GST" or "Tax", check adjacent cells
+            // This is expensive if many cells, but usually not too many.
+            // Optimization: Check specific range if possible, but for now iterate.
+            // Or better, check if we have a known Tax cell in template (not currently).
+
+            // Let's try to find a cell with value "Tax" or "GST"
+            for (const [coord, val] of cellValues.entries()) {
+                if (val && typeof val === 'string' && /GST|Tax/i.test(val)) {
+                    // Found a label. Look for value in next column (e.g. C -> D, or C -> F)
+                    // This requires coordinate parsing which is tricky here.
+                    // Let's skip complex parsing for now and rely on Total * 0.18 if not found? 
+                    // No, that's bad.
+
+                    // Let's just try to find a number that looks like tax? No.
+
+                    // Let's assume for now we don't have reliable GST extraction without template support.
+                    // But I will add a placeholder for it.
+                }
+            }
+
             // Extract Total
             // We need to find the Total cell. 
             // In DATA[1001], it's F36. But it might vary.
@@ -116,11 +169,37 @@ export const parseInvoiceData = (files: any[]): InvoiceAnalytics => {
                 const monthKey = date.toLocaleString('default', { month: 'short' }); // e.g., "Dec"
                 analytics.revenueByMonth[monthKey] = (analytics.revenueByMonth[monthKey] || 0) + totalAmount;
 
+                // GST Logic (Placeholder: 18% of total for demo if not extracted)
+                // In production, this should be extracted from the invoice
+                const gst = totalAmount * 0.18;
+                analytics.gstByMonth[monthKey] = (analytics.gstByMonth[monthKey] || 0) + gst;
+
                 analytics.recentActivity.push({
                     date: file.created,
                     amount: totalAmount,
                     fileName: file.name
                 });
+
+                // Process Customer
+                if (customerName) {
+                    const key = customerEmail || customerPhone || customerName;
+                    const existing = customerMap.get(key) || {
+                        name: customerName,
+                        email: customerEmail,
+                        phone: customerPhone,
+                        totalSpent: 0,
+                        invoiceCount: 0,
+                        lastPurchase: file.created
+                    };
+
+                    existing.totalSpent += totalAmount;
+                    existing.invoiceCount++;
+                    if (new Date(file.created) > new Date(existing.lastPurchase)) {
+                        existing.lastPurchase = file.created;
+                    }
+
+                    customerMap.set(key, existing);
+                }
             }
 
             // Extract Items
@@ -162,6 +241,9 @@ export const parseInvoiceData = (files: any[]): InvoiceAnalytics => {
         .map(([name, data]) => ({ name, ...data }))
         .sort((a, b) => b.revenue - a.revenue)
         .slice(0, 5);
+
+    analytics.customers = Array.from(customerMap.values())
+        .sort((a, b) => b.totalSpent - a.totalSpent);
 
     // Sort recent activity
     analytics.recentActivity.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

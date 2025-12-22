@@ -1,0 +1,227 @@
+.auth-page {
+    --background: #ffffff;
+}
+
+.auth-page.dark {
+    --background: #0f172a;
+}
+
+.auth-content {
+    --padding-top: 0;
+    --padding-bottom: 0;
+    --padding-start: 0;
+    --padding-end: 0;
+    height: 100%;
+}
+
+.auth-wrapper {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Left Side - Hero/Brand */
+.auth-hero-section {
+    flex: 1;
+    background: linear-gradient(135deg, var(--ion-color-primary) 0%, var(--ion-color-primary-shade) 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 4rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-hero-content {
+    z-index: 2;
+    max-width: 480px;
+}
+
+.auth-hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+}
+
+.auth-hero-subtitle {
+    font-size: 1.25rem;
+    opacity: 0.9;
+    line-height: 1.6;
+}
+
+/* Abstract Shapes */
+.hero-shape {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(40px);
+}
+
+.shape-1 {
+    width: 300px;
+    height: 300px;
+    top: -50px;
+    right: -50px;
+}
+
+.shape-2 {
+    width: 400px;
+    height: 400px;
+    bottom: -100px;
+    left: -100px;
+}
+
+/* Right Side - Form */
+.auth-form-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: var(--background);
+    position: relative;
+}
+
+.auth-form-container {
+    width: 100%;
+    max-width: 420px;
+    padding: 2rem;
+}
+
+.auth-header {
+    margin-bottom: 2.5rem;
+    text-align: left;
+}
+
+.auth-logo {
+    height: 40px;
+    width: auto;
+    margin-bottom: 1.5rem;
+}
+
+.auth-page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--ion-color-primary);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+}
+
+.auth-page-subtitle {
+    color: var(--ion-color-medium);
+    font-size: 1rem;
+}
+
+/* Form Elements */
+.custom-input {
+    --background: transparent;
+    --padding-start: 0;
+    --padding-end: 0;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--ion-color-light-shade);
+}
+
+.custom-input.item-has-focus {
+    border-bottom-color: var(--ion-color-primary);
+}
+
+.submit-btn {
+    margin-top: 1rem;
+    height: 48px;
+    font-weight: 600;
+    --border-radius: 12px;
+    --box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 2rem 0;
+    color: var(--ion-color-medium);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--ion-color-light-shade);
+}
+
+.auth-divider::before {
+    margin-right: 1rem;
+}
+
+.auth-divider::after {
+    margin-left: 1rem;
+}
+
+.social-login-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.social-btn {
+    --border-radius: 12px;
+    --border-color: var(--ion-color-light-shade);
+    --color: var(--ion-text-color);
+    height: 44px;
+}
+
+.back-home-btn {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    --color: var(--ion-color-medium);
+    font-weight: 500;
+    z-index: 10;
+    text-transform: none;
+    font-size: 0.9rem;
+}
+
+.back-home-btn:hover {
+    --color: var(--ion-color-primary);
+}
+
+/* Adjust for mobile */
+@media (max-width: 992px) {
+    .back-home-btn {
+        top: 0.5rem;
+        left: 0.5rem;
+    }
+}
+
+.toggle-text {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.95rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 992px) {
+    .auth-wrapper {
+        flex-direction: column;
+    }
+
+    .auth-hero-section {
+        display: none;
+        /* Hide hero on mobile for cleaner look */
+    }
+
+    .auth-form-section {
+        padding: 1.5rem;
+        align-items: flex-start;
+    }
+
+    .auth-form-container {
+        padding: 1rem 0;
+    }
+}

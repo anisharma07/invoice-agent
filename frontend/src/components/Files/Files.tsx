@@ -516,191 +516,114 @@ const Files: React.FC<{
         if (sortBy === "name") {
           // For name sorting, show files in a simple list without date grouping
           content = (
-            <IonList style={{ border: "none" }} lines="none">
-              {sortedFiles.map((file) => (
-                <IonItemGroup key={`local-${file.key}`}>
-                  <IonItem
-                    className="mobile-file-item"
-                    onClick={() => editFile(file.key)}
-                    style={{
-                      "--border-width": "0px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <IonIcon
-                      icon={documentText}
-                      slot="start"
-                      className="file-icon document-icon"
-                    />
-                    <IonLabel className="mobile-file-label">
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          marginBottom: "2px",
-                        }}
-                      >
-                        <h3 style={{ margin: "0" }}>{file.name}</h3>
-                        {file.templateMetadata && (
-                          <IonChip
-                            color="primary"
-                            outline
-                            className="template-chip"
-                          >
-                            <IonIcon icon={layers} />
-                            <IonLabel>
-                              {file.templateMetadata.template}
-                            </IonLabel>
-                          </IonChip>
-                        )}
-                      </div>
-                      <p>
-                        Local file • {getLocalFileDateInfo(file).label}:{" "}
-                        {_formatDate(getLocalFileDateInfo(file).value)}
-                      </p>
-                    </IonLabel>
-                    <div
-                      slot="end"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                      }}
-                    >
-                      <IonIcon
-                        icon={create}
-                        color="primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          renameFile(file.key);
-                        }}
-                        style={{
-                          fontSize: "24px",
-                          cursor: "pointer",
-                        }}
-                      />
-                      <IonIcon
-                        icon={trash}
-                        color="danger"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteFile(file.key);
-                        }}
-                        style={{
-                          fontSize: "24px",
-                          cursor: "pointer",
-                        }}
-                      />
-                    </div>
-                  </IonItem>
-                </IonItemGroup>
-              ))}
-            </IonList>
+            <IonGrid className="files-grid-container">
+              <IonRow>
+                {sortedFiles.map((file) => (
+                  <IonCol size="12" sizeSm="6" sizeMd="4" sizeLg="3" key={`local-${file.key}`}>
+                    <IonCard className="file-card" onClick={() => editFile(file.key)}>
+                      <IonCardContent className="file-card-content">
+                        <div className="file-card-header">
+                          <div className="file-icon-wrapper">
+                            <IonIcon icon={documentText} className="file-icon-card" />
+                          </div>
+                          <div className="file-actions">
+                            <IonButton
+                              fill="clear"
+                              size="small"
+                              className="file-action-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                renameFile(file.key);
+                              }}
+                            >
+                              <IonIcon icon={create} slot="icon-only" />
+                            </IonButton>
+                            <IonButton
+                              fill="clear"
+                              size="small"
+                              color="danger"
+                              className="file-action-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteFile(file.key);
+                              }}
+                            >
+                              <IonIcon icon={trash} slot="icon-only" />
+                            </IonButton>
+                          </div>
+                        </div>
+                        <div className="file-info">
+                          <h3 className="file-name" title={file.name}>{file.name}</h3>
+                          <p className="file-date">
+                            {getLocalFileDateInfo(file).label}: {_formatDate(getLocalFileDateInfo(file).value)}
+                          </p>
+                        </div>
+                      </IonCardContent>
+                    </IonCard>
+                  </IonCol>
+                ))}
+              </IonRow>
+            </IonGrid>
           );
         } else {
           // For date and recent sorting, group by date
           const groupedFiles = groupFilesByDate(sortedFiles, sortBy);
           content = (
-            <IonList style={{ border: "none" }} lines="none">
+            <div className="files-grid-container">
               {Object.entries(groupedFiles).map(([dateHeader, files]) => (
-                <div key={`local-group-${dateHeader}`}>
-                  <IonItem
-                    color="light"
-                    className="date-header-item"
-                    style={{ "--border-width": "0px" }}
-                  >
-                    <IonLabel>
-                      <h2
-                        className="date-header-text"
-                        style={{ color: "var(--ion-color-primary)" }}
-                      >
-                        {dateHeader}
-                      </h2>
-                    </IonLabel>
-                  </IonItem>
-                  {(files as any[]).map((file) => (
-                    <IonItemGroup key={`local-${file.key}`}>
-                      <IonItem
-                        className="mobile-file-item"
-                        onClick={() => editFile(file.key)}
-                        style={{
-                          "--border-width": "0px",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <IonIcon
-                          icon={documentText}
-                          slot="start"
-                          className="file-icon document-icon"
-                        />
-                        <IonLabel className="mobile-file-label">
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              marginBottom: "2px",
-                            }}
-                          >
-                            <h3 style={{ margin: "0" }}>{file.name}</h3>
-                            {file.templateMetadata && (
-                              <IonChip
-                                color="primary"
-                                outline
-                                className="template-chip"
-                              >
-                                <IonIcon icon={layers} />
-                                <IonLabel>
-                                  {file.templateMetadata.template}
-                                </IonLabel>
-                              </IonChip>
-                            )}
-                          </div>
-                          <p>
-                            Local file • {getLocalFileDateInfo(file).label}:{" "}
-                            {_formatDate(getLocalFileDateInfo(file).value)}
-                          </p>
-                        </IonLabel>
-                        <div
-                          slot="end"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                          }}
-                        >
-                          <IonIcon
-                            icon={create}
-                            color="primary"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              renameFile(file.key);
-                            }}
-                            style={{
-                              fontSize: "24px",
-                              cursor: "pointer",
-                            }}
-                          />
-                          <IonIcon
-                            icon={trash}
-                            color="danger"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteFile(file.key);
-                            }}
-                            style={{
-                              fontSize: "24px",
-                              cursor: "pointer",
-                            }}
-                          />
-                        </div>
-                      </IonItem>
-                    </IonItemGroup>
-                  ))}
+                <div key={`local-group-${dateHeader}`} className="date-group">
+                  <h3 className="date-header">{dateHeader}</h3>
+                  <IonGrid>
+                    <IonRow>
+                      {(files as any[]).map((file) => (
+                        <IonCol size="12" sizeSm="6" sizeMd="4" sizeLg="3" key={`local-${file.key}`}>
+                          <IonCard className="file-card" onClick={() => editFile(file.key)}>
+                            <IonCardContent className="file-card-content">
+                              <div className="file-card-header">
+                                <div className="file-icon-wrapper">
+                                  <IonIcon icon={documentText} className="file-icon-card" />
+                                </div>
+                                <div className="file-actions">
+                                  <IonButton
+                                    fill="clear"
+                                    size="small"
+                                    className="file-action-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      renameFile(file.key);
+                                    }}
+                                  >
+                                    <IonIcon icon={create} slot="icon-only" />
+                                  </IonButton>
+                                  <IonButton
+                                    fill="clear"
+                                    size="small"
+                                    color="danger"
+                                    className="file-action-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      deleteFile(file.key);
+                                    }}
+                                  >
+                                    <IonIcon icon={trash} slot="icon-only" />
+                                  </IonButton>
+                                </div>
+                              </div>
+                              <div className="file-info">
+                                <h3 className="file-name" title={file.name}>{file.name}</h3>
+                                <p className="file-date">
+                                  {getLocalFileDateInfo(file).label}: {_formatDate(getLocalFileDateInfo(file).value)}
+                                </p>
+                              </div>
+                            </IonCardContent>
+                          </IonCard>
+                        </IonCol>
+                      ))}
+                    </IonRow>
+                  </IonGrid>
                 </div>
               ))}
-            </IonList>
+            </div>
           );
         }
       }

@@ -25,11 +25,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     const getPageTitle = () => {
         const path = location.pathname;
         if (path.includes('/app/dashboard/home')) return 'Home';
-        if (path.includes('/app/dashboard/files')) return 'Files';
+        if (path.includes('/app/dashboard/invoices')) return 'Invoices';
         if (path.includes('/app/dashboard/templates')) return 'Templates';
-        if (path.includes('/app/dashboard/store')) return 'Store';
+
         if (path.includes('/app/dashboard/jobs')) return 'Jobs';
         if (path.includes('/app/dashboard/settings')) return 'Settings';
+        if (path.includes('/app/dashboard/account')) return 'Account';
         return 'Dashboard';
     };
 

@@ -1,10 +1,8 @@
 /* File Manager Header Styling - mobile optimized */
 .files-modal-header {
-  background: linear-gradient(
-    135deg,
-    var(--ion-color-primary),
-    var(--ion-color-primary-shade)
-  );
+  background: linear-gradient(135deg,
+      var(--ion-color-primary),
+      var(--ion-color-primary-shade));
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   --min-height: 48px;
 }
@@ -80,7 +78,7 @@
 
 /* Modal scrollable files container - updated for mobile */
 .files-scrollable-container {
- 
+
   padding: 0 8px;
   margin-bottom: 8px;
 }
@@ -243,9 +241,11 @@
   0% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.7;
   }
+
   100% {
     opacity: 1;
   }
@@ -299,10 +299,7 @@
   color: #f0f6fc !important;
 }
 
-.dark-theme
-  .files-modal-content
-  ion-segment-button.segment-button-checked
-  ion-label {
+.dark-theme .files-modal-content ion-segment-button.segment-button-checked ion-label {
   color: #ffffff !important;
 }
 
@@ -312,10 +309,7 @@
   font-size: 0.75rem !important;
 }
 
-.dark-theme
-  .smaller-segment-text
-  ion-segment-button.segment-button-checked
-  ion-label {
+.dark-theme .smaller-segment-text ion-segment-button.segment-button-checked ion-label {
   color: #ffffff !important;
   font-size: 0.75rem !important;
 }
@@ -474,11 +468,9 @@
 /* Light Theme Files Component (Explicit) */
 .light-theme .files-modal-header,
 :root .files-modal-header {
-  background: linear-gradient(
-    135deg,
-    var(--ion-color-primary),
-    var(--ion-color-primary-shade)
-  );
+  background: linear-gradient(135deg,
+      var(--ion-color-primary),
+      var(--ion-color-primary-shade));
 }
 
 .light-theme .files-modal-header ion-toolbar,
@@ -516,10 +508,7 @@
   color: #24292f !important;
 }
 
-.light-theme
-  .files-modal-content
-  ion-segment-button.segment-button-checked
-  ion-label,
+.light-theme .files-modal-content ion-segment-button.segment-button-checked ion-label,
 :root .files-modal-content ion-segment-button.segment-button-checked ion-label {
   color: #ffffff !important;
 }
@@ -750,6 +739,7 @@ ion-icon[slot="end"] {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
 }
+
 .dark-theme .template-option-card {
   background: #0d1117;
 }
@@ -783,9 +773,11 @@ ion-icon[slot="end"] {
   padding: 16px 16px 0 16px;
   background-color: white;
 }
+
 .dark-theme .custom-tabs-container {
   background: #0d1117;
 }
+
 .custom-tabs {
   display: flex;
   border-bottom: 1px solid var(--ion-color-light-shade, #e9ecef);
@@ -824,26 +816,26 @@ ion-icon[slot="end"] {
   .template-options-container {
     gap: 6px;
   }
-  
+
   .template-option-card {
     min-width: 90px;
     max-width: 120px;
     padding: 10px 12px;
   }
-  
+
   .template-option-icon {
     font-size: 20px;
   }
-  
+
   .template-option-text {
     font-size: 11px;
   }
-  
+
   .custom-tab-button {
     padding: 10px 12px;
     font-size: 13px;
   }
-  
+
   .files-modal-title {
     font-size: 1rem;
   }
@@ -853,28 +845,138 @@ ion-icon[slot="end"] {
   .template-creation-section {
     padding: 12px;
   }
-  
+
   .template-option-card {
     min-width: 80px;
     max-width: 110px;
     padding: 8px 10px;
   }
-  
+
   .template-option-icon {
     font-size: 18px;
     margin-bottom: 2px;
   }
-  
+
   .template-option-text {
     font-size: 10px;
   }
-  
+
   .custom-tabs-container {
     padding: 12px 12px 0 12px;
   }
-  
+
   .custom-tab-button {
     padding: 8px 10px;
     font-size: 12px;
   }
+}
+
+/* File Card Styling */
+.file-card {
+  margin: 8px 0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.file-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+.file-card-content {
+  padding: 16px;
+}
+
+.file-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.file-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(var(--ion-color-primary-rgb), 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-icon-card {
+  font-size: 24px;
+  color: var(--ion-color-primary);
+}
+
+.file-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.file-action-btn {
+  --padding-start: 4px;
+  --padding-end: 4px;
+  margin: 0;
+  height: 32px;
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.file-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ion-text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+
+.file-date {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+}
+
+/* Dark Mode Support */
+.dark-theme .file-card {
+  background: #1e1e1e;
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark-theme .file-icon-wrapper {
+  background: rgba(var(--ion-color-primary-rgb), 0.2);
+}
+
+/* Grid Container */
+.files-grid-container {
+  padding-bottom: 20px;
+}
+
+.date-group {
+  margin-bottom: 24px;
+}
+
+.date-header {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ion-color-primary);
+  margin: 0 0 12px 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dark-theme .date-header {
+  border-bottom-color: rgba(255, 255, 255, 0.05);
 }

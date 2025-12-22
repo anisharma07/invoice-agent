@@ -203,3 +203,80 @@ export const clearOnlineInvoices = async (): Promise<void> => {
         console.error("Error clearing online invoices:", error);
     }
 };
+
+const FAVORITES_KEY = "favorite_templates";
+
+export interface DashboardFavoriteItem {
+    templateId: number | string; // Supporting both string ids (from DATA) and number ids
+    isAppTemplate: boolean;
+    timestamp: string;
+}
+
+/**
+ * Get all favorites
+ */
+export const getFavorites = async (): Promise<DashboardFavoriteItem[]> => {
+    try {
+        const result = await Preferences.get({ key: FAVORITES_KEY });
+        if (result.value) {
+            return JSON.parse(result.value);
+        }
+        return [];
+    } catch (error) {
+        console.error("Error getting favorites:", error);
+        return [];
+    }
+};
+
+/**
+ * Add or Remove a template from favorites (Toggle)
+ * returns true if added, false if removed
+ */
+export const toggleFavorite = async (
+    templateId: number | string,
+    isAppTemplate: boolean = false
+): Promise<boolean> => {
+    try {
+        const favorites = await getFavorites();
+        const existingIndex = favorites.findIndex(f => f.templateId === templateId);
+
+        let isAdded = false;
+        let newFavorites = [...favorites];
+
+        if (existingIndex >= 0) {
+            // Remove
+            newFavorites.splice(existingIndex, 1);
+            isAdded = false;
+        } else {
+            // Add
+            newFavorites.push({
+                templateId,
+                isAppTemplate,
+                timestamp: new Date().toISOString()
+            });
+            isAdded = true;
+        }
+
+        await Preferences.set({
+            key: FAVORITES_KEY,
+            value: JSON.stringify(newFavorites)
+        });
+
+        return isAdded;
+    } catch (error) {
+        console.error("Error toggling favorite:", error);
+        return false;
+    }
+};
+
+/**
+ * Check if a template is favorited
+ */
+export const isFavorite = async (templateId: number | string): Promise<boolean> => {
+    try {
+        const favorites = await getFavorites();
+        return favorites.some(f => f.templateId === templateId);
+    } catch (error) {
+        return false;
+    }
+};

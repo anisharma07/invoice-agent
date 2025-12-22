@@ -1,5 +1,9 @@
 .invoice-store-content {
     --background: var(--ion-background-color);
+    --padding-top: 16px;
+    --padding-start: 16px;
+    --padding-end: 16px;
+    --padding-bottom: 16px;
 }
 
 /* Search and Filter Container */
@@ -108,7 +112,7 @@
 .template-store-image {
     position: relative;
     width: 100%;
-    height: 200px;
+    height: 320px;
     background: var(--ion-color-light);
     display: flex;
     align-items: center;
@@ -119,7 +123,7 @@
 .template-store-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
 }
 
 .template-image-placeholder {
@@ -170,6 +174,32 @@
 
 .private-badge ion-icon {
     font-size: 14px;
+}
+
+/* Favorite Button Overlay */
+.favorite-button-overlay {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    z-index: 10;
+    transition: transform 0.2s;
+}
+
+.favorite-button-overlay:hover {
+    transform: scale(1.1);
+}
+
+.favorite-button-overlay ion-icon {
+    font-size: 18px;
 }
 
 /* Template Header */
@@ -243,18 +273,6 @@
     flex-wrap: wrap;
 }
 
-.category-chip {
-    --background: var(--ion-color-primary);
-    --color: white;
-    font-size: 12px;
-    font-weight: 600;
-    height: 28px;
-}
-
-.category-chip ion-icon {
-    font-size: 14px;
-}
-
 .device-chip {
     --background: var(--ion-color-light);
     --color: var(--ion-color-medium);
@@ -320,6 +338,18 @@
     flex: 1;
 }
 
+.template-store-actions .import-btn {
+    --color: var(--ion-color-primary);
+    --border-color: var(--ion-color-primary);
+    --border-width: 1px;
+}
+
+.template-store-actions .edit-btn {
+    --background: var(--ion-color-primary);
+    --color: var(--ion-color-primary-contrast);
+    --box-shadow: none;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .search-filter-container {
@@ -376,12 +406,186 @@ ion-segment-button {
     --background: var(--ion-color-primary-shade);
 }
 
+/* Redesigned Card Styling */
+.recent-card {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+    background: var(--ion-card-background);
+    margin: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.recent-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+.template-store-image {
+    position: relative;
+    height: 280px;
+    /* Increased height for portrait invoices */
+    background: #f4f5f8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.template-image-placeholder {
+    width: 100%;
+    height: 100%;
+    background: white;
+    /* Box shadow removed as it covers full area now */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+}
+
+.template-image-placeholder ion-icon {
+    font-size: 32px;
+    color: var(--ion-color-medium);
+}
+
+/* Card Actions Overlay (Favorite) */
+.template-card-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 10;
+}
+
+.favorite-button {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.favorite-button:hover {
+    transform: scale(1.1);
+}
+
+.favorite-button ion-icon {
+    font-size: 18px;
+}
+
+/* Card Content */
+.template-card-content {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex-grow: 1;
+}
+
+.template-name {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ion-text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.create-btn {
+    --border-radius: 8px;
+    font-weight: 600;
+    flex-grow: 1;
+    margin: 0;
+    height: 32px;
+    font-size: 12px;
+    margin-right: 8px;
+    /* Add some spacing since gap is gone */
+}
+
+.template-action-buttons ion-button[fill="clear"] {
+    margin: 0;
+    width: 32px;
+    height: 32px;
+    --padding-start: 0;
+    --padding-end: 0;
+}
+
+/* Dark Theme Adjustments */
+.dark-theme .favorite-button {
+    background: rgba(40, 40, 40, 0.9);
+}
+
+.dark-theme .template-store-image {
+    background: var(--ion-color-step-50);
+}
+
+.dark-theme .template-image-placeholder {
+    background: var(--ion-color-step-100);
+}
+
+.dark-theme .recent-card {
+    background: var(--ion-card-background);
+}
+
 .dark-theme .device-chip {
     --background: var(--ion-color-step-100);
     --color: var(--ion-color-medium-tint);
 }
 
+/* Typography Refinements */
+.manage-templates-title,
+h2.manage-templates-title {
+    margin: 0;
+    font-size: 20px !important;
+    font-weight: 500 !important;
+    color: var(--ion-text-color);
+}
+
+/* Larger Icons for Edit/Delete */
+.template-action-buttons ion-button[fill="clear"] ion-icon {
+    font-size: 20px;
+}
+
+.template-action-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0;
+    /* Reduced to zero per request */
+    margin-top: auto;
+}
+
 .dark-theme .tag {
     background: var(--ion-color-step-100);
     color: var(--ion-color-primary-tint);
+}
+
+/* Browse Templates Modal */
+.browse-templates-modal {
+    --width: 90%;
+    --height: 90%;
+    --border-radius: 16px;
+    --box-shadow: 0 28px 48px rgba(0, 0, 0, 0.4);
+}
+
+/* Template Preview Image */
+.template-preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+    padding: 8px;
+    /* Add some padding so it doesn't touch edges */
+}
+
+.template-store-card:hover .template-preview-image {
+    transform: scale(1.05);
 }

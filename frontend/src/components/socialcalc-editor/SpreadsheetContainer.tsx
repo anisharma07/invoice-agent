@@ -20,6 +20,7 @@ interface SpreadsheetContainerProps {
   onReady?: (api: SpreadsheetAPI) => void;
   autoSave?: boolean;
   autoSaveInterval?: number;
+  skipInitialLoad?: boolean;
 }
 
 /**
@@ -33,6 +34,7 @@ export const SpreadsheetContainer: React.FC<SpreadsheetContainerProps> = ({
   onReady,
   autoSave = true,
   autoSaveInterval = 30000,
+  skipInitialLoad = false,
 }) => {
   const {
     status,
@@ -46,11 +48,13 @@ export const SpreadsheetContainer: React.FC<SpreadsheetContainerProps> = ({
   const { saveToLocal, clearLocal, loadFromLocal, hasLocalData } = useLocalPersistence(
     getSheetData,
     loadSheetData,
-    { autoSave, autoSaveInterval }
+    { autoSave, autoSaveInterval, skipInitialLoad }
   );
 
-  // Load saved data when spreadsheet is ready
+  // Load saved data when spreadsheet is ready if skipInitialLoad is false
   useEffect(() => {
+    if (skipInitialLoad) return;
+
     if (status === 'loaded' && hasLocalData()) {
       const savedData = loadFromLocal();
       if (savedData) {
@@ -61,7 +65,7 @@ export const SpreadsheetContainer: React.FC<SpreadsheetContainerProps> = ({
         return () => clearTimeout(timer);
       }
     }
-  }, [status, hasLocalData, loadFromLocal, loadSheetData]);
+  }, [status, hasLocalData, loadFromLocal, loadSheetData, skipInitialLoad]);
 
   // Expose API when ready
   useEffect(() => {

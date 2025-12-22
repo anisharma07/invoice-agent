@@ -26,6 +26,8 @@ import { tempMeta } from '../templates-meta';
 import DashboardStats from '../components/Dashboard/DashboardStats';
 import RevenueChart from '../components/Dashboard/RevenueChart';
 import TopItemsChart from '../components/Dashboard/TopItemsChart';
+import CustomersChart from '../components/Dashboard/CustomersChart';
+import GSTChart from '../components/Dashboard/GSTChart';
 import { parseInvoiceData, InvoiceAnalytics } from '../utils/invoiceAnalytics';
 
 const DashboardHome: React.FC = () => {
@@ -63,7 +65,50 @@ const DashboardHome: React.FC = () => {
             ]);
             setRecentInvoices(recent);
 
-            const data = parseInvoiceData(allFiles);
+            let data = parseInvoiceData(allFiles);
+
+            // If no data, use dummy data for visualization
+            if (data.totalInvoices === 0) {
+                data = {
+                    totalRevenue: 45250.00,
+                    totalInvoices: 12,
+                    averageInvoiceValue: 3770.83,
+                    revenueByMonth: {
+                        'Jan': 5000,
+                        'Feb': 7500,
+                        'Mar': 4200,
+                        'Apr': 8900,
+                        'May': 6500,
+                        'Jun': 9800,
+                        'Jul': 3350
+                    },
+                    topItems: [
+                        { name: 'Web Development', count: 8, revenue: 15000 },
+                        { name: 'UI Design', count: 5, revenue: 8500 },
+                        { name: 'SEO Optimization', count: 4, revenue: 4200 },
+                        { name: 'Consulting', count: 3, revenue: 3000 },
+                        { name: 'Hosting', count: 10, revenue: 2000 }
+                    ],
+                    recentActivity: [],
+                    gstByMonth: {
+                        'Jan': 900,
+                        'Feb': 1350,
+                        'Mar': 756,
+                        'Apr': 1602,
+                        'May': 1170,
+                        'Jun': 1764,
+                        'Jul': 603
+                    },
+                    customers: [
+                        { name: 'Acme Corp', email: 'contact@acme.com', phone: '', totalSpent: 12000, invoiceCount: 3, lastPurchase: '2023-07-15' },
+                        { name: 'Globex', email: 'info@globex.com', phone: '', totalSpent: 8500, invoiceCount: 2, lastPurchase: '2023-06-20' },
+                        { name: 'Soylent Corp', email: 'sales@soylent.com', phone: '', totalSpent: 5000, invoiceCount: 1, lastPurchase: '2023-05-10' },
+                        { name: 'Initech', email: 'bill@initech.com', phone: '', totalSpent: 4500, invoiceCount: 2, lastPurchase: '2023-07-01' },
+                        { name: 'Umbrella Corp', email: 'wesker@umbrella.com', phone: '', totalSpent: 3000, invoiceCount: 1, lastPurchase: '2023-04-05' }
+                    ]
+                };
+            }
+
             setAnalytics(data);
         } catch (error) {
             console.error("Error loading dashboard data:", error);
@@ -111,6 +156,14 @@ const DashboardHome: React.FC = () => {
                             </IonCol>
                             <IonCol size="12" sizeMd="4">
                                 <TopItemsChart items={analytics?.topItems || []} />
+                            </IonCol>
+                        </IonRow>
+                        <IonRow>
+                            <IonCol size="12" sizeMd="6">
+                                <CustomersChart customers={analytics?.customers || []} />
+                            </IonCol>
+                            <IonCol size="12" sizeMd="6">
+                                <GSTChart data={analytics?.gstByMonth || {}} />
                             </IonCol>
                         </IonRow>
                     </IonGrid>
