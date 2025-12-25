@@ -1,0 +1,180 @@
+.pricing-page {
+    --background: #f8fafc;
+    --text-color: #1e293b;
+}
+
+.pricing-page.dark {
+    --background: #111827;
+    --text-color: #f3f4f6;
+}
+
+.pricing-content {
+    --background: transparent;
+}
+
+.pricing-header {
+    text-align: center;
+    padding: 4rem 1rem 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.pricing-title {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+}
+
+.pricing-subtitle {
+    font-size: 1.25rem;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+/* Special Offer Banner */
+.special-offer-banner {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    padding: 1rem;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 3rem;
+    box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.pricing-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 4rem;
+}
+
+.pricing-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    height: 100%;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.pricing-page.dark .pricing-card {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+.pricing-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.pricing-card.featured {
+    border: 2px solid #3b82f6;
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2);
+}
+
+.popular-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: #3b82f6;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+}
+
+.plan-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.plan-price {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-color);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+}
+
+.plan-description {
+    color: #64748b;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.plan-price span {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.plan-price .original-price {
+    font-size: 1.25rem;
+    text-decoration: line-through;
+    color: #94a3b8;
+    margin-right: 0.5rem;
+}
+
+.plan-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2rem;
+    flex-grow: 1;
+}
+
+.plan-features li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+}
+
+.plan-features ion-icon {
+    color: #10b981;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.pricing-card ion-button {
+    --border-radius: 8px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.coupon-note {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #ef4444;
+    margin-top: 0.75rem;
+    font-weight: 500;
+}
+
+.pricing-footer-text {
+    text-align: center;
+    margin-top: 3rem;
+    color: #64748b;
+    font-size: 0.9rem;
+}

@@ -589,3 +589,17 @@ h2.manage-templates-title {
 .template-store-card:hover .template-preview-image {
     transform: scale(1.05);
 }
+
+/* Templates Grid Layout for stable card sizing */
+.templates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    padding: 0;
+}
+
+@media (max-width: 576px) {
+    .templates-grid {
+        grid-template-columns: 1fr;
+    }
+}

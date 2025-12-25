@@ -1,10 +1,11 @@
 import { IonApp, IonRouterOutlet, setupIonicReact } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
 import { Route, Redirect } from "react-router-dom";
-import Home from "./pages/Home";
+import InvoicePage from "./pages/InvoicePage";
 import InvoicesPage from "./pages/InvoicesPage";
 import SettingsPage from "./pages/SettingsPage";
 import LandingPage from "./pages/LandingPage";
+import PricingPage from "./pages/PricingPage";
 import AuthPage from "./pages/AuthPage";
 import AccountPage from "./pages/AccountPage";
 import InvoiceAIPage from "./pages/InvoiceAIPage";
@@ -12,11 +13,14 @@ import TemplatesPage from "./pages/TemplatesPage";
 import DashboardLayout from "./components/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
 import JobsPage from "./pages/JobsPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import { InvoiceProvider } from "./contexts/InvoiceContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import PWAUpdatePrompt from "./components/PWAUpdatePrompt";
 import OfflineIndicator from "./components/OfflineIndicator";
+import AuthCallback from "./pages/AuthCallback";
 import { usePWA } from "./hooks/usePWA";
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css";
@@ -52,58 +56,66 @@ const AppContent: React.FC = () => {
             <Route exact path="/">
               <LandingPage />
             </Route>
+            <Route exact path="/pricing">
+              <PricingPage />
+            </Route>
             <Route exact path="/auth">
               <AuthPage />
             </Route>
+            <Route exact path="/auth/callback">
+              <AuthCallback />
+            </Route>
             <Route path="/app">
-              {!isOnline && <OfflineIndicator />}
-              <IonRouterOutlet>
-                {/* Dashboard Routes */}
-                <Route path="/app/dashboard" render={() => (
-                  <DashboardLayout>
-                    <IonRouterOutlet>
-                      <Route exact path="/app/dashboard/home" component={DashboardHome} />
-                      <Route exact path="/app/dashboard/invoices" component={InvoicesPage} />
-                      <Route exact path="/app/dashboard/templates" component={TemplatesPage} />
+              <ProtectedRoute>
+                {!isOnline && <OfflineIndicator />}
+                <IonRouterOutlet>
+                  {/* Dashboard Routes */}
+                  <Route path="/app/dashboard" render={() => (
+                    <DashboardLayout>
+                      <IonRouterOutlet>
+                        <Route exact path="/app/dashboard/home" component={DashboardHome} />
+                        <Route exact path="/app/dashboard/invoices" component={InvoicesPage} />
+                        <Route exact path="/app/dashboard/templates" component={TemplatesPage} />
 
-                      <Route exact path="/app/dashboard/jobs" component={JobsPage} />
-                      <Route exact path="/app/dashboard/settings" component={SettingsPage} />
-                      <Route exact path="/app/dashboard/account" component={AccountPage} />
-                      <Route exact path="/app/dashboard">
-                        <Redirect to="/app/dashboard/home" />
-                      </Route>
-                    </IonRouterOutlet>
-                  </DashboardLayout>
-                )} />
+                        <Route exact path="/app/dashboard/jobs" component={JobsPage} />
+                        <Route exact path="/app/dashboard/settings" component={SettingsPage} />
+                        <Route exact path="/app/dashboard/account" component={AccountPage} />
+                        <Route exact path="/app/dashboard">
+                          <Redirect to="/app/dashboard/home" />
+                        </Route>
+                      </IonRouterOutlet>
+                    </DashboardLayout>
+                  )} />
 
-                <Route exact path="/app/editor/:fileName">
-                  <Home />
-                </Route>
-                <Route exact path="/app/editor">
-                  <Home />
-                </Route>
+                  <Route exact path="/app/editor/:fileName">
+                    <InvoicePage />
+                  </Route>
+                  <Route exact path="/app/editor">
+                    <InvoicePage />
+                  </Route>
 
-                {/* Legacy Redirects */}
-                <Route exact path="/app/files">
-                  <Redirect to="/app/dashboard/invoices" />
-                </Route>
-                <Route exact path="/app/settings">
-                  <Redirect to="/app/dashboard/settings" />
-                </Route>
+                  {/* Legacy Redirects */}
+                  <Route exact path="/app/files">
+                    <Redirect to="/app/dashboard/invoices" />
+                  </Route>
+                  <Route exact path="/app/settings">
+                    <Redirect to="/app/dashboard/settings" />
+                  </Route>
 
-                <Route exact path="/app/invoice-ai/:templateId">
-                  <InvoiceAIPage />
-                </Route>
-                <Route exact path="/app/invoice-ai">
-                  <InvoiceAIPage />
-                </Route>
-                <Route exact path="/app/invoice-store">
-                  <Redirect to="/app/dashboard/templates" />
-                </Route>
-                <Route exact path="/app">
-                  <Redirect to="/app/dashboard/home" />
-                </Route>
-              </IonRouterOutlet>
+                  <Route exact path="/app/invoice-ai/:templateId">
+                    <InvoiceAIPage />
+                  </Route>
+                  <Route exact path="/app/invoice-ai">
+                    <InvoiceAIPage />
+                  </Route>
+                  <Route exact path="/app/invoice-store">
+                    <Redirect to="/app/dashboard/templates" />
+                  </Route>
+                  <Route exact path="/app">
+                    <Redirect to="/app/dashboard/home" />
+                  </Route>
+                </IonRouterOutlet>
+              </ProtectedRoute>
             </Route>
           </IonRouterOutlet>
         </IonReactRouter>
@@ -115,7 +127,9 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => (
   <ThemeProvider>
-    <AppContent />
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   </ThemeProvider>
 );
 

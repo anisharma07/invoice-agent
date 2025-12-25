@@ -16,7 +16,8 @@ import {
   documents,
   key,
 } from "ionicons/icons";
-import { APP_NAME, DATA } from "../../templates.js";
+// import { APP_NAME, DATA } from "../../templates.js";
+const APP_NAME = "Invoice Agent";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useInvoice } from "../../contexts/InvoiceContext";
 import { exportHTMLAsPDF } from "../../services/exportAsPdf.js";

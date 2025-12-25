@@ -1,49 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     IonPage,
     IonContent,
     IonButton,
-    IonInput,
-    IonItem,
-    IonLabel,
     IonText,
     IonIcon,
     IonSpinner
 } from '@ionic/react';
-import { logoGoogle, logoApple, mailOutline, lockClosedOutline, personOutline, arrowForward, arrowBack } from 'ionicons/icons';
+import { logoGoogle, logoApple, arrowBack } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { markUserAsExisting } from '../utils/helper';
 import './AuthPage.css';
 
 const AuthPage: React.FC = () => {
-    const [isLogin, setIsLogin] = useState(true);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [name, setName] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const history = useHistory();
     const { isDarkMode } = useTheme();
+    const { isAuthenticated, login, signup, isLoading: authLoading } = useAuth();
 
-    const handleAuth = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-
-        // Simulate API call
-        setTimeout(() => {
-            setIsLoading(false);
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
             markUserAsExisting();
             history.replace('/app/dashboard/home');
-        }, 1500);
+        }
+    }, [isAuthenticated, history]);
+
+    const handleGoogleLogin = () => {
+        setIsLoading(true);
+        login('Google');
     };
 
-    const toggleMode = () => {
-        setIsLogin(!isLogin);
-        setEmail('');
-        setPassword('');
-        setName('');
+    const handleEmailLogin = () => {
+        setIsLoading(true);
+        login(); // This will redirect to Cognito Hosted UI with email/password
     };
+
+    const handleSignup = () => {
+        setIsLoading(true);
+        signup(); // This will redirect to Cognito Hosted UI signup
+    };
+
+    if (authLoading) {
+        return (
+            <IonPage className={`auth-page ${isDarkMode ? 'dark' : ''}`}>
+                <IonContent fullscreen className="auth-content">
+                    <div className="auth-loading-container">
+                        <IonSpinner name="crescent" />
+                        <p>Loading...</p>
+                    </div>
+                </IonContent>
+            </IonPage>
+        );
+    }
 
     return (
         <IonPage className={`auth-page ${isDarkMode ? 'dark' : ''}`}>
@@ -89,93 +101,64 @@ const AuthPage: React.FC = () => {
                         >
                             <div className="auth-header">
                                 <img src="/favicon.png" alt="Logo" className="auth-logo" />
-                                <h2 className="auth-page-title">{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
+                                <h2 className="auth-page-title">Welcome</h2>
                                 <p className="auth-page-subtitle">
-                                    {isLogin
-                                        ? 'Enter your email to access your dashboard'
-                                        : 'Get started with your free account today'}
+                                    Sign in to access your invoices and manage your business
                                 </p>
                             </div>
 
-                            <form onSubmit={handleAuth}>
-                                <AnimatePresence mode='wait'>
-                                    {!isLogin && (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: 'auto' }}
-                                            exit={{ opacity: 0, height: 0 }}
-                                        >
-                                            <IonItem className="custom-input" lines="none">
-                                                <IonLabel position="stacked">Full Name</IonLabel>
-                                                <IonInput
-                                                    value={name}
-                                                    placeholder="John Doe"
-                                                    onIonChange={e => setName(e.detail.value!)}
-                                                    required={!isLogin}
-                                                />
-                                                <IonIcon slot="start" icon={personOutline} size="small" style={{ marginTop: '28px', marginRight: '8px' }} />
-                                            </IonItem>
-                                        </motion.div>
+                            {/* Social Login Buttons */}
+                            <div className="social-login-buttons-stacked">
+                                <IonButton
+                                    expand="block"
+                                    fill="outline"
+                                    className="social-btn google-btn"
+                                    onClick={handleGoogleLogin}
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? (
+                                        <IonSpinner name="crescent" />
+                                    ) : (
+                                        <>
+                                            <IonIcon icon={logoGoogle} slot="start" />
+                                            Continue with Google
+                                        </>
                                     )}
-                                </AnimatePresence>
-
-                                <IonItem className="custom-input" lines="none">
-                                    <IonLabel position="stacked">Email Address</IonLabel>
-                                    <IonInput
-                                        type="email"
-                                        value={email}
-                                        placeholder="name@example.com"
-                                        onIonChange={e => setEmail(e.detail.value!)}
-                                        required
-                                    />
-                                    <IonIcon slot="start" icon={mailOutline} size="small" style={{ marginTop: '28px', marginRight: '8px' }} />
-                                </IonItem>
-
-                                <IonItem className="custom-input" lines="none">
-                                    <IonLabel position="stacked">Password</IonLabel>
-                                    <IonInput
-                                        type="password"
-                                        value={password}
-                                        placeholder="••••••••"
-                                        onIonChange={e => setPassword(e.detail.value!)}
-                                        required
-                                    />
-                                    <IonIcon slot="start" icon={lockClosedOutline} size="small" style={{ marginTop: '28px', marginRight: '8px' }} />
-                                </IonItem>
+                                </IonButton>
 
                                 <IonButton
                                     expand="block"
-                                    type="submit"
-                                    className="submit-btn"
-                                    color="primary"
-                                    disabled={isLoading}
+                                    fill="outline"
+                                    className="social-btn apple-btn"
+                                    disabled={true}
                                 >
-                                    {isLoading ? <IonSpinner name="crescent" /> : (isLogin ? 'Sign In' : 'Create Account')}
-                                    {!isLoading && <IonIcon slot="end" icon={arrowForward} />}
-                                </IonButton>
-                            </form>
-
-                            <div className="auth-divider">Or continue with</div>
-
-                            <div className="social-login-buttons">
-                                <IonButton fill="outline" className="social-btn">
-                                    <IonIcon icon={logoGoogle} slot="start" />
-                                    Google
-                                </IonButton>
-                                <IonButton fill="outline" className="social-btn">
                                     <IonIcon icon={logoApple} slot="start" />
-                                    Apple
+                                    Continue with Apple
+                                    <span className="coming-soon-badge">Coming Soon</span>
                                 </IonButton>
                             </div>
 
+                            <div className="auth-divider">Or</div>
+
+                            {/* Email Login Button */}
+                            <IonButton
+                                expand="block"
+                                className="submit-btn"
+                                color="primary"
+                                onClick={handleEmailLogin}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? <IonSpinner name="crescent" /> : 'Sign in with Email'}
+                            </IonButton>
+
                             <div className="toggle-text">
                                 <IonText color="medium">
-                                    {isLogin ? "Don't have an account? " : "Already have an account? "}
+                                    Don't have an account?{' '}
                                     <span
                                         style={{ color: 'var(--ion-color-primary)', cursor: 'pointer', fontWeight: '600' }}
-                                        onClick={toggleMode}
+                                        onClick={handleSignup}
                                     >
-                                        {isLogin ? 'Sign Up' : 'Sign In'}
+                                        Sign Up
                                     </span>
                                 </IonText>
                             </div>

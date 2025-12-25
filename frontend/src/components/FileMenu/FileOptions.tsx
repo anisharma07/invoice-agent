@@ -47,7 +47,8 @@ import {
 } from "ionicons/icons";
 import * as AppGeneral from "../socialcalc/index.js";
 import { File } from "../Storage/LocalStorage.js";
-import { DATA } from "../../templates.js";
+import { storageApi } from "../../services/storage-api";
+// import { DATA } from "../../templates.js";
 import { useInvoice } from "../../contexts/InvoiceContext.js";
 import { formatDateForFilename } from "../../utils/helper.js";
 import { useTheme } from "../../contexts/ThemeContext.js";
@@ -63,8 +64,6 @@ interface FileOptionsProps {
   setShowActionsPopover: (show: boolean) => void;
   showColorModal: boolean;
   setShowColorPicker: (show: boolean) => void;
-  onSave?: () => Promise<void>;
-  isAutoSaveEnabled?: boolean;
   fileName: string;
 }
 
@@ -73,15 +72,11 @@ const FileOptions: React.FC<FileOptionsProps> = ({
   setShowActionsPopover,
   showColorModal,
   setShowColorPicker,
-  onSave,
-  isAutoSaveEnabled = false,
   fileName,
 }) => {
   const { isDarkMode } = useTheme();
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [showSaveAsAlert, setShowSaveAsAlert] = useState(false);
-  const [newFileName, setNewFileName] = useState("");
   const [showLogoAlert, setShowLogoAlert] = useState(false);
   const [device] = useState(AppGeneral.getDeviceType());
   const actionsPopoverRef = useRef<HTMLIonPopoverElement>(null);
@@ -111,17 +106,6 @@ const FileOptions: React.FC<FileOptionsProps> = ({
     updateBillType,
     resetToDefaults,
   } = useInvoice();
-
-  // Helper function to trigger save if autosave is enabled
-  const triggerAutoSave = async () => {
-    if (isAutoSaveEnabled && onSave) {
-      try {
-        await onSave();
-      } catch (error) {
-        // Error handled
-      }
-    }
-  };
 
   // Load saved logos and signatures on component mount
   useEffect(() => {
@@ -161,16 +145,16 @@ const FileOptions: React.FC<FileOptionsProps> = ({
       return;
     }
 
-    const logoCell = activeTemplateData.logoCell;
     const currentSheetId = activeTemplateData.msc.currentid;
-    let logoCoordinate: string;
+    // Check for "Logo" in appMapping for the current sheet
+    let logoCoordinate: string | undefined;
+    const sheetMapping = activeTemplateData.appMapping?.[currentSheetId];
+    if (sheetMapping && sheetMapping['Logo'] && sheetMapping['Logo'].type === 'image') {
+      logoCoordinate = sheetMapping['Logo'].cell;
+    }
 
-    if (typeof logoCell === "string") {
-      logoCoordinate = logoCell;
-    } else if (logoCell && logoCell[currentSheetId]) {
-      logoCoordinate = logoCell[currentSheetId];
-    } else {
-      setToastMessage("Logo position not available for current sheet");
+    if (!logoCoordinate) {
+      setToastMessage("Logo position not available for this template");
       setShowToast(true);
       return;
     }
@@ -185,9 +169,6 @@ const FileOptions: React.FC<FileOptionsProps> = ({
       setToastMessage(`Logo applied successfully!`);
       setShowToast(true);
       setShowLogoModal(false);
-
-      // Trigger auto-save if enabled
-      await triggerAutoSave();
     } catch (error) {
       // Error handled
       setToastMessage("Failed to apply logo");
@@ -216,106 +197,14 @@ const FileOptions: React.FC<FileOptionsProps> = ({
     AppGeneral.redo();
   };
 
-  const _validateName = (filename: string) => {
-    if (!filename.trim()) {
-      setToastMessage("File name cannot be empty");
-      setShowToast(true);
-      return false;
-    }
-    return true;
-  };
-
-  const _checkForExistingFile = async (filename: string) => {
-    try {
-      const existingFile = await store._checkKey(filename);
-      if (existingFile) {
-        setToastMessage("File already exists. Please choose a different name.");
-        setShowToast(true);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      // Error handled
-      return false;
-    }
-  };
-
-  const doSaveAs = async (filename: string) => {
-    try {
-      // Validate the filename first
-      if (!_validateName(filename)) {
-        return;
-      }
-
-      // Check if file already exists
-      const exists = await _checkForExistingFile(filename);
-      if (exists) return;
-
-      setToastMessage("Saving file...");
-      setShowToast(true);
-
-      // Get current file data to copy its structure
-      const currentFile = await store._getFile(fileName || selectedFile);
-      const content = AppGeneral.getSpreadsheetContent();
-      const now = new Date().toISOString();
-      if (!currentFile) {
-        // Error handled
-        setToastMessage("Error saving file!");
-        setShowToast(true);
-        return;
-      }
-      // Create new file with all structure from current file
-      let data = {
-        created: currentFile?.created || now,
-        modified: now,
-        content: encodeURIComponent(content),
-        name: filename,
-        billType: currentFile?.billType || billType || 1,
-        isEncrypted: currentFile?.isEncrypted || false,
-        templateId: currentFile?.templateId,
-      };
-
-      const file = new File(
-        data.created,
-        data.modified,
-        data.content,
-        data.name,
-        data.billType,
-        data.templateId,
-        data.isEncrypted
-      );
-      // Error handled
-      await store._saveFile(file);
-
-      setToastMessage("File saved successfully!");
-      setShowToast(true);
-      // Redirect to the new file after a short delay
-      setTimeout(() => {
-        const link = document.createElement("a");
-        link.href = `/app/editor/${filename}`;
-        link.click();
-      }, 200);
-    } catch (error) {
-      // Error handled
-
-      if (isQuotaExceededError(error)) {
-        setToastMessage(getQuotaExceededMessage("saving file"));
-      } else {
-        setToastMessage("Failed to save file. Please try again.");
-      }
-      setShowToast(true);
-    }
-  };
-
-  const handleSaveAs = () => {
-    setShowActionsPopover(false);
-    setNewFileName("");
-    setShowSaveAsAlert(true);
-  };
-
   const handleNewFileClick = () => {
     setShowActionsPopover(false);
     setShowTemplateModal(true);
+  };
+
+  const handleCellFormatting = () => {
+    setShowActionsPopover(false);
+    AppGeneral.toggleCellFormatting();
   };
 
   const getCurrentSelectedCell = (): string | null => {
@@ -333,16 +222,16 @@ const FileOptions: React.FC<FileOptionsProps> = ({
       return;
     }
 
-    const logoCell = activeTemplateData.logoCell;
     const currentSheetId = activeTemplateData.msc.currentid;
-    let logoCoordinate: string;
+    // Check for "Logo" in appMapping for the current sheet
+    let logoCoordinate: string | undefined;
+    const sheetMapping = activeTemplateData.appMapping?.[currentSheetId];
+    if (sheetMapping && sheetMapping['Logo'] && sheetMapping['Logo'].type === 'image') {
+      logoCoordinate = sheetMapping['Logo'].cell;
+    }
 
-    if (typeof logoCell === "string") {
-      logoCoordinate = logoCell;
-    } else if (logoCell && logoCell[currentSheetId]) {
-      logoCoordinate = logoCell[currentSheetId];
-    } else {
-      setToastMessage("Logo position not available for current sheet");
+    if (!logoCoordinate) {
+      setToastMessage("Logo position not available for this template");
       setShowToast(true);
       return;
     }
@@ -356,9 +245,6 @@ const FileOptions: React.FC<FileOptionsProps> = ({
       AppGeneral.removeLogo(logoCoordinates);
       setToastMessage("Logo removed successfully!");
       setShowToast(true);
-
-      // Trigger auto-save if enabled
-      await triggerAutoSave();
     } catch (error) {
       // Error handled
       setToastMessage("Failed to remove logo");
@@ -375,16 +261,16 @@ const FileOptions: React.FC<FileOptionsProps> = ({
       return;
     }
 
-    const signatureCell = activeTemplateData.signatureCell;
     const currentSheetId = activeTemplateData.msc.currentid;
-    let signatureCoordinate: string;
+    // Check for "Signature" in appMapping for the current sheet
+    let signatureCoordinate: string | undefined;
+    const sheetMapping = activeTemplateData.appMapping?.[currentSheetId];
+    if (sheetMapping && sheetMapping['Signature'] && sheetMapping['Signature'].type === 'image') {
+      signatureCoordinate = sheetMapping['Signature'].cell;
+    }
 
-    if (typeof signatureCell === "string") {
-      signatureCoordinate = signatureCell;
-    } else if (signatureCell && signatureCell[currentSheetId]) {
-      signatureCoordinate = signatureCell[currentSheetId];
-    } else {
-      setToastMessage("Signature position not available for current sheet");
+    if (!signatureCoordinate) {
+      setToastMessage("Signature position not available for this template");
       setShowToast(true);
       return;
     }
@@ -398,9 +284,6 @@ const FileOptions: React.FC<FileOptionsProps> = ({
       AppGeneral.removeLogo(signatureCoordinates);
       setToastMessage("Signature removed successfully!");
       setShowToast(true);
-
-      // Trigger auto-save if enabled
-      await triggerAutoSave();
     } catch (error) {
       // Error handled
       setToastMessage("Failed to remove signature");
@@ -427,16 +310,16 @@ const FileOptions: React.FC<FileOptionsProps> = ({
       return;
     }
 
-    const signatureCell = activeTemplateData.signatureCell;
     const currentSheetId = activeTemplateData.msc.currentid;
-    let signatureCoordinate: string;
+    // Check for "Signature" in appMapping for the current sheet
+    let signatureCoordinate: string | undefined;
+    const sheetMapping = activeTemplateData.appMapping?.[currentSheetId];
+    if (sheetMapping && sheetMapping['Signature'] && sheetMapping['Signature'].type === 'image') {
+      signatureCoordinate = sheetMapping['Signature'].cell;
+    }
 
-    if (typeof signatureCell === "string") {
-      signatureCoordinate = signatureCell;
-    } else if (signatureCell && signatureCell[currentSheetId]) {
-      signatureCoordinate = signatureCell[currentSheetId];
-    } else {
-      setToastMessage("Signature position not available for current sheet");
+    if (!signatureCoordinate) {
+      setToastMessage("Signature position not available for this template");
       setShowToast(true);
       return;
     }
@@ -451,9 +334,6 @@ const FileOptions: React.FC<FileOptionsProps> = ({
       setToastMessage(`Signature applied successfully!`);
       setShowToast(true);
       setShowSignatureModal(false);
-
-      // Trigger auto-save if enabled
-      await triggerAutoSave();
     } catch (error) {
       // Error handled
       setToastMessage("Failed to apply signature");
@@ -479,9 +359,9 @@ const FileOptions: React.FC<FileOptionsProps> = ({
               <IonLabel>New</IonLabel>
             </IonItem>
 
-            <IonItem button onClick={handleSaveAs}>
-              <IonIcon icon={documentOutline} slot="start" />
-              <IonLabel>Save As</IonLabel>
+            <IonItem button onClick={handleCellFormatting}>
+              <IonIcon icon={colorPaletteOutline} slot="start" />
+              <IonLabel>Cell Formatting</IonLabel>
             </IonItem>
 
             <IonItem button onClick={handleUndo}>
@@ -521,36 +401,6 @@ const FileOptions: React.FC<FileOptionsProps> = ({
           </IonList>
         </IonContent>
       </IonPopover>
-
-      {/* Save As Alert */}
-      <IonAlert
-        isOpen={showSaveAsAlert}
-        onDidDismiss={() => setShowSaveAsAlert(false)}
-        header="Save As"
-        inputs={[
-          {
-            name: "filename",
-            type: "text",
-            placeholder: "Enter filename",
-            value: newFileName,
-          },
-        ]}
-        buttons={[
-          {
-            text: "Cancel",
-            role: "cancel",
-            cssClass: "secondary",
-          },
-          {
-            text: "Save",
-            handler: (data) => {
-              if (data.filename?.trim()) {
-                doSaveAs(data.filename.trim());
-              }
-            },
-          },
-        ]}
-      />
 
       {/* Toast for notifications */}
       <IonToast
@@ -707,8 +557,8 @@ const FileOptions: React.FC<FileOptionsProps> = ({
       <TemplateModal
         isOpen={showTemplateModal}
         onClose={() => setShowTemplateModal(false)}
-        onFileCreated={(fileName, templateId) => {
-          setToastMessage(`File "${fileName}" created successfully!`);
+        onCreateFile={(templateId, templateName) => {
+          setToastMessage(`File "${templateName}" created successfully!`);
           setShowToast(true);
         }}
       />

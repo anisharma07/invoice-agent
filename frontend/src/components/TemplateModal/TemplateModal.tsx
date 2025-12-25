@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  IonAlert,
   IonContent,
   IonHeader,
   IonModal,
@@ -9,570 +8,102 @@ import {
   IonButton,
   IonIcon,
   IonButtons,
-  IonSegment,
-  IonSegmentButton,
   IonText,
   IonToast,
-  IonPopover,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonCheckbox,
+  IonSpinner,
+  IonCard,
+  IonGrid,
+  IonRow,
+  IonCol,
 } from "@ionic/react";
 import {
-  chevronForward,
-  layers,
   close,
-  phonePortraitOutline,
-  tabletPortraitOutline,
-  desktopOutline,
-  filterOutline,
-  timeOutline,
-  folderOpenOutline,
-  gridOutline,
-  heart,
-  heartOutline,
+  documentTextOutline,
+  briefcaseOutline,
+  createOutline,
+  layersOutline,
 } from "ionicons/icons";
 import { useTheme } from "../../contexts/ThemeContext";
-import { useInvoice } from "../../contexts/InvoiceContext";
-import { DATA } from "../../templates";
-import { tempMeta, TemplateMeta } from "../../templates-meta";
-import { File } from "../Storage/LocalStorage";
+import { storageApi, Template } from "../../services/storage-api";
 import { useHistory } from "react-router-dom";
-import {
-  addToRecentTemplates,
-  getRecentTemplates,
-  getOnlineInvoices,
-  TemplateHistoryItem,
-  OnlineInvoiceItem,
-} from "../../utils/templateHistory";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface TemplateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onFileCreated?: (fileName: string, templateId: number) => void;
+  onCreateFile?: (templateId: string, templateName: string) => void;
+  onCreateJob?: (templateId: string, templateName: string) => void;
 }
 
 const TemplateModal: React.FC<TemplateModalProps> = ({
   isOpen,
   onClose,
-  onFileCreated,
+  onCreateFile,
+  onCreateJob,
 }) => {
   const { isDarkMode } = useTheme();
-  const { store, updateSelectedFile, updateBillType } = useInvoice();
+  const { user } = useAuth();
   const history = useHistory();
 
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [showFileNamePrompt, setShowFileNamePrompt] = useState(false);
-  const [selectedTemplateForFile, setSelectedTemplateForFile] = useState<
-    number | null
-  >(null);
-  const [newFileName, setNewFileName] = useState("");
+  const [userTemplates, setUserTemplates] = useState<Template[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // New tab-based state
-  const [activeTab, setActiveTab] = useState<"favourites" | "yours" | "default">("default");
-
-  // Filter state
-  const [templateFilter, setTemplateFilter] = useState<"all" | "web" | "mobile" | "tablet">("all");
-  const [showFilterPopover, setShowFilterPopover] = useState(false);
-  const [filterPopoverEvent, setFilterPopoverEvent] = useState<any>(null);
-  const [filterType, setFilterType] = useState<"device" | "category" | "domain">("device");
-  const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
-
-  // Data state
-  const [favoriteTemplates, setFavoriteTemplates] = useState<number[]>([]);
-  const [onlineInvoices, setOnlineInvoices] = useState<OnlineInvoiceItem[]>([]);
-
-  const [isSmallScreen, setIsSmallScreen] = useState(false);
-
-  // Check screen size
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsSmallScreen(window.innerWidth < 692);
-    };
-
-    checkScreenSize();
-    window.addEventListener("resize", checkScreenSize);
-    return () => window.removeEventListener("resize", checkScreenSize);
-  }, []);
-
-  // Load templates from localStorage when modal opens
+  // Load user templates when modal opens
   useEffect(() => {
     if (isOpen) {
-      loadTemplatesFromStorage();
-      initializeFilters();
+      loadUserTemplates();
     }
   }, [isOpen]);
 
-  const loadTemplatesFromStorage = async () => {
+  const loadUserTemplates = async () => {
+    setIsLoading(true);
     try {
-      const savedFavorites = localStorage.getItem('favoriteTemplates');
-      if (savedFavorites) {
-        setFavoriteTemplates(JSON.parse(savedFavorites));
-      }
-
-      // Load online invoices imported from Invoice Store
-      const online = await getOnlineInvoices();
-      setOnlineInvoices(online);
+      const userId = user?.sub || 'default_user';
+      const result = await storageApi.fetchTemplates(1, 100, userId);
+      setUserTemplates(result.items);
     } catch (error) {
-      console.error("Error loading templates from storage:", error);
+      console.error("Error loading templates:", error);
+      setToastMessage("Failed to load templates");
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const toggleFavorite = (e: React.MouseEvent, templateId: number) => {
-    e.stopPropagation();
-    let newFavorites;
-    if (favoriteTemplates.includes(templateId)) {
-      newFavorites = favoriteTemplates.filter(id => id !== templateId);
-    } else {
-      newFavorites = [...favoriteTemplates, templateId];
-    }
-    setFavoriteTemplates(newFavorites);
-    localStorage.setItem('favoriteTemplates', JSON.stringify(newFavorites));
-  };
-
-  // Initialize filters with all available options
-  const initializeFilters = () => {
-    // Get all unique device types
-    const devices = Array.from(
-      new Set(tempMeta.map((t) => t.deviceType))
-    );
-    setSelectedDevices(devices);
-
-    // Get all unique categories
-    const categories = Array.from(
-      new Set(tempMeta.map((t) => t.category))
-    );
-    setSelectedCategories(categories);
-
-    // Get all unique domains
-    const domains = Array.from(
-      new Set(tempMeta.map((t) => t.domain))
-    );
-    setSelectedDomains(domains);
-  };
-
-  const getTemplateMetadata = (templateId: number) => {
-    return tempMeta.find((meta) => meta.template_id === templateId);
-  };
-
-  // Categorize templates based on their metadata category
-  const categorizeTemplate = (template_id: number) => {
-    const metadata = getTemplateMetadata(template_id);
-    if (!metadata?.category) return "web";
-
-    const category = metadata.category.toLowerCase();
-    if (category === "mobile") {
-      return "mobile";
-    } else if (category === "tablet") {
-      return "tablet";
-    } else {
-      return "web";
-    }
-  };
-
-  // Get categorized templates
-  const getCategorizedTemplates = () => {
-    const templates = tempMeta;
-    const categorized = {
-      web: templates.filter((t) => {
-        return categorizeTemplate(t.template_id) === "web";
-      }),
-      mobile: templates.filter((t) => {
-        return categorizeTemplate(t.template_id) === "mobile";
-      }),
-      tablet: templates.filter((t) => {
-        return categorizeTemplate(t.template_id) === "tablet";
-      }),
-    };
-    return categorized;
-  };
-
-  // Get filtered templates based on current filter
-  const getFilteredTemplates = () => {
-    let templates = tempMeta;
-
-    // Apply device filter
-    if (selectedDevices.length > 0 && selectedDevices.length < 3) {
-      templates = templates.filter((t) =>
-        selectedDevices.includes(t.deviceType)
-      );
-    }
-
-    // Apply category filter
-    if (selectedCategories.length > 0) {
-      templates = templates.filter((t) =>
-        selectedCategories.includes(t.category)
-      );
-    }
-
-    // Apply domain filter
-    if (selectedDomains.length > 0) {
-      templates = templates.filter((t) =>
-        selectedDomains.includes(t.domain)
-      );
-    }
-
-    return templates;
-  };
-
-  const handleTemplateSelect = async (templateId: number, fileName?: string) => {
-    setSelectedTemplateForFile(templateId);
-    setShowFileNamePrompt(true);
-
-    // If selecting from recent or user templates, update recent
-    if (fileName) {
-      await addToRecentTemplates(templateId, fileName);
-      await loadTemplatesFromStorage();
-    }
-  };
-
-  // Reset template filter when modal closes
   const handleModalClose = () => {
-    setTemplateFilter("all");
-    setActiveTab("default"); // Reset to default tab
-    setSelectedTemplateForFile(null);
-    setNewFileName("");
-    setShowFileNamePrompt(false);
-    // Reset filters
-    initializeFilters();
     onClose();
   };
 
-  /* Utility functions */
-  const _validateName = async (filename: string) => {
-    filename = filename.trim();
-    if (filename === "Untitled") {
-      return {
-        isValid: false,
-        message: "cannot update Untitled file! Use Save As Button to save.",
-      };
-    } else if (filename === "" || !filename) {
-      return {
-        isValid: false,
-        message: "Filename cannot be empty",
-      };
-    } else if (filename.length > 30) {
-      return {
-        isValid: false,
-        message: "Filename too long",
-      };
-    } else if (/^[a-zA-Z0-9- ]*$/.test(filename) === false) {
-      return {
-        isValid: false,
-        message: "Special Characters cannot be used",
-      };
-    } else if (await store._checkKey(filename)) {
-      return {
-        isValid: false,
-        message: "Filename already exists",
-      };
+  const handleCreateFile = (template: Template) => {
+    // Navigate to InvoicePage with template mode
+    // Using ?template=<id> loads a FRESH template without any saved filename
+    // The user will provide a name when they save the invoice
+    handleModalClose();
+    history.push(`/app/editor/invoice?template=${template.id}`);
+  };
+
+  const handleCreateJob = (template: Template) => {
+    if (onCreateJob) {
+      onCreateJob(String(template.id), template.name);
     }
-    return {
-      isValid: true,
-      message: "",
-    };
+    handleModalClose();
   };
 
-  // Create new file with template
-  const createNewFileWithTemplate = async (
-    templateId: number,
-    fileName: string
-  ) => {
-    try {
-      // Validate filename first
-      const validation = await _validateName(fileName);
-      if (!validation.isValid) {
-        setToastMessage(validation.message);
-        setShowToast(true);
-        return;
-      }
+  const navigateToTemplates = () => {
+    handleModalClose();
+    history.push('/app/templates');
+  };
 
-      const templateData = DATA[templateId];
-      if (!templateData) {
-        setToastMessage("Template not found");
-        setShowToast(true);
-        return;
-      }
-
-      const mscContent = templateData.msc;
-      const jsonMsc = JSON.stringify(mscContent);
-      if (!mscContent) {
-        setToastMessage("Error creating template content");
-        setShowToast(true);
-        return;
-      }
-
-      // Find the active footer index, default to 1 if none found
-      const activeFooter = templateData.footers?.find(
-        (footer) => footer.isActive
-      );
-      const activeFooterIndex = activeFooter ? activeFooter.index : 1;
-
-      const now = new Date().toISOString();
-      const newFile = new File(
-        now,
-        now,
-        encodeURIComponent(jsonMsc), // mscContent is already a JSON string
-        fileName,
-        activeFooterIndex,
-        templateId,
-        false
-      );
-
-      await store._saveFile(newFile);
-
-      setToastMessage(
-        `File "${fileName}" created with ${templateData.template}`
-      );
-      setShowToast(true);
-
-      // Reset modal state
-      setShowFileNamePrompt(false);
-      setSelectedTemplateForFile(null);
-      setNewFileName("");
-      handleModalClose();
-
-      updateSelectedFile(fileName);
-      updateBillType(activeFooterIndex);
-
-      // Call the callback if provided
-      if (onFileCreated) {
-        onFileCreated(fileName, templateId);
-      }
-
-      setTimeout(() => {
-        const link = document.createElement("a");
-        link.href = `/app/editor/${fileName}`;
-        link.click();
-      }, 200);
-    } catch (error) {
-      setToastMessage("Failed to create file");
-      setShowToast(true);
+  // Get image src with fallback for base64
+  const getImageSrc = (image: string | undefined) => {
+    if (!image) return null;
+    if (image.startsWith('data:') || image.startsWith('http')) {
+      return image;
     }
+    return `data:image/png;base64,${image}`;
   };
-
-  // Helper function to render individual template items
-  const renderTemplateItem = (template: any, keyPrefix?: string, showFileName?: boolean) => {
-    const templateId = template.templateId || template.template_id;
-    const metadata = getTemplateMetadata(templateId);
-    const templateName =
-      metadata?.name ||
-      template.template ||
-      template.name ||
-      "Unknown Template";
-    const category = categorizeTemplate(templateId);
-
-    // Get the template data from DATA to access footers
-    const templateData = DATA[templateId];
-    const footers = templateData?.footers || [];
-
-    // For recent/user templates, show file name
-    const fileName = template.fileName || null;
-    const isFavorite = favoriteTemplates.includes(templateId);
-
-    return (
-      <div
-        key={
-          keyPrefix
-            ? `${keyPrefix}-${templateId}-${fileName || ''}`
-            : `${templateId}-${fileName || ''}`
-        }
-        onClick={() =>
-          handleTemplateSelect(templateId, fileName)
-        }
-        style={{
-          border: `1px solid ${isDarkMode
-            ? "var(--ion-color-step-200)"
-            : "var(--ion-color-step-150)"
-            }`,
-          borderRadius: "8px",
-          padding: "12px",
-          marginBottom: "12px",
-          cursor: "pointer",
-          backgroundColor: isDarkMode
-            ? "var(--ion-color-step-50)"
-            : "var(--ion-background-color)",
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          transition: "all 0.2s ease",
-          position: "relative"
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.backgroundColor = isDarkMode
-            ? "var(--ion-color-step-100)"
-            : "var(--ion-color-step-50)";
-          e.currentTarget.style.borderColor = isDarkMode
-            ? "var(--ion-color-step-300)"
-            : "var(--ion-color-step-200)";
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.backgroundColor = isDarkMode
-            ? "var(--ion-color-step-50)"
-            : "var(--ion-background-color)";
-          e.currentTarget.style.borderColor = isDarkMode
-            ? "var(--ion-color-step-200)"
-            : "var(--ion-color-step-150)";
-        }}
-      >
-        {/* Favorite Button */}
-        <div
-          onClick={(e) => toggleFavorite(e, templateId)}
-          style={{
-            position: 'absolute',
-            top: '8px',
-            right: '8px',
-            zIndex: 10,
-            padding: '4px'
-          }}
-        >
-          <IonIcon
-            icon={isFavorite ? heart : heartOutline}
-            style={{
-              color: isFavorite ? '#eb445a' : 'var(--ion-color-medium)',
-              fontSize: '20px'
-            }}
-          />
-        </div>
-
-        {/* Template Image */}
-        <div
-          style={{
-            width: "56px",
-            height: "56px",
-            borderRadius: "6px",
-            overflow: "hidden",
-            backgroundColor: isDarkMode
-              ? "var(--ion-color-step-100)"
-              : "var(--ion-color-step-50)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-            border: `1px solid ${isDarkMode
-              ? "var(--ion-color-step-200)"
-              : "var(--ion-color-step-150)"
-              }`,
-          }}
-        >
-          {metadata?.ImageUri ? (
-            <img
-              src={`data:image/png;base64,${metadata.ImageUri}`}
-              alt={metadata.name}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
-              }}
-            />
-          ) : (
-            <IonIcon
-              icon={layers}
-              style={{
-                fontSize: "24px",
-                color: isDarkMode
-                  ? "var(--ion-color-step-400)"
-                  : "var(--ion-color-step-500)",
-              }}
-            />
-          )}
-        </div>
-
-        {/* Template Info */}
-        <div style={{ flex: 1 }}>
-          <h3
-            style={{
-              margin: "0 0 4px 0",
-              fontSize: "15px",
-              fontWeight: "600",
-              color: isDarkMode
-                ? "var(--ion-color-step-750)"
-                : "var(--ion-color-step-650)",
-              lineHeight: "1.3",
-            }}
-          >
-            {templateName}
-          </h3>
-          {showFileName && fileName && (
-            <p
-              style={{
-                margin: "0 0 4px 0",
-                fontSize: "13px",
-                color: isDarkMode
-                  ? "var(--ion-color-step-600)"
-                  : "var(--ion-color-step-550)",
-                fontWeight: "500",
-              }}
-            >
-              {fileName}
-            </p>
-          )}
-          <p
-            style={{
-              margin: "0 0 6px 0",
-              fontSize: "12px",
-              color: isDarkMode
-                ? "var(--ion-color-step-500)"
-                : "var(--ion-color-step-450)",
-              fontWeight: "400",
-            }}
-          >
-            {footers.length} footer{footers.length !== 1 ? "s" : ""}
-            {showFileName && template.lastUsed && (
-              <span style={{ marginLeft: "8px" }}>
-                • {new Date(template.lastUsed).toLocaleDateString()}
-              </span>
-            )}
-          </p>
-          {/* Category Badge */}
-          <div
-            style={{
-              fontSize: "10px",
-              padding: "2px 6px",
-              borderRadius: "4px",
-              display: "inline-block",
-              fontWeight: "500",
-              letterSpacing: "0.3px",
-              backgroundColor: isDarkMode
-                ? "var(--ion-color-step-150)"
-                : "var(--ion-color-step-100)",
-              color: isDarkMode
-                ? "var(--ion-color-step-600)"
-                : "var(--ion-color-step-500)",
-              border: `1px solid ${isDarkMode
-                ? "var(--ion-color-step-200)"
-                : "var(--ion-color-step-150)"
-                }`,
-              textTransform: "uppercase",
-            }}
-          >
-            {category}
-          </div>
-        </div>
-
-        {/* Arrow Icon */}
-        <IonIcon
-          icon={chevronForward}
-          style={{
-            fontSize: "18px",
-            color: isDarkMode
-              ? "var(--ion-color-step-400)"
-              : "var(--ion-color-step-350)",
-            opacity: 0.7,
-            marginRight: '24px' // Make space for heart icon
-          }}
-        />
-      </div>
-    );
-  };
-
-  const filteredTemplates = getFilteredTemplates();
-  const categorized = getCategorizedTemplates();
-  const favoriteTemplatesList = tempMeta.filter(t => favoriteTemplates.includes(t.template_id));
 
   return (
     <>
@@ -587,369 +118,178 @@ const TemplateModal: React.FC<TemplateModalProps> = ({
             </IonButtons>
           </IonToolbar>
         </IonHeader>
-        <IonContent>
-          {/* Tab Segment */}
-          <div
-            style={{
-              padding: "16px 16px 0 16px",
-              background: isDarkMode
-                ? "var(--ion-color-step-50)"
-                : "var(--ion-background-color)",
-            }}
-          >
-            <IonSegment
-              value={activeTab}
-              onIonChange={(e) =>
-                setActiveTab(e.detail.value as "favourites" | "yours" | "default")
-              }
-              style={{
-                background: isDarkMode
-                  ? "var(--ion-color-step-150)"
-                  : "var(--ion-color-step-100)",
-                borderRadius: "8px",
-                padding: "3px",
-                border: `1px solid ${isDarkMode
-                  ? "var(--ion-color-step-250)"
-                  : "var(--ion-color-step-150)"
-                  }`,
-                marginBottom: "12px",
-              }}
-            >
-              <IonSegmentButton value="favourites">
-                <IonIcon icon={heart} style={{ fontSize: "16px" }} />
-                <IonText style={{ fontSize: "12px", fontWeight: "500", marginLeft: "4px" }}>
-                  Favourites ({favoriteTemplates.length})
-                </IonText>
-              </IonSegmentButton>
-              <IonSegmentButton value="yours">
-                <IonIcon icon={folderOpenOutline} style={{ fontSize: "16px" }} />
-                <IonText style={{ fontSize: "12px", fontWeight: "500", marginLeft: "4px" }}>
-                  Yours ({onlineInvoices.length})
-                </IonText>
-              </IonSegmentButton>
-              <IonSegmentButton value="default">
-                <IonIcon icon={gridOutline} style={{ fontSize: "16px" }} />
-                <IonText style={{ fontSize: "12px", fontWeight: "500", marginLeft: "4px" }}>
-                  Default ({tempMeta.length})
-                </IonText>
-              </IonSegmentButton>
-            </IonSegment>
-          </div>
-
-          {/* Filter Buttons - Only show for default tab */}
-          {activeTab === "default" && (
-            <div
-              style={{
-                padding: "0 16px 16px 16px",
-                background: isDarkMode
-                  ? "var(--ion-color-step-50)"
-                  : "var(--ion-background-color)",
-                borderBottom: `1px solid ${isDarkMode
-                  ? "var(--ion-color-step-200)"
-                  : "var(--ion-color-step-150)"
-                  }`,
-                margin: "0",
-                display: "flex",
-                gap: "8px",
-                justifyContent: "center",
-              }}
-            >
-              {/* Device Filter */}
-              <IonButton
-                fill="outline"
-                size="small"
-                onClick={(e) => {
-                  setFilterType("device");
-                  setFilterPopoverEvent(e.nativeEvent);
-                  setShowFilterPopover(true);
-                }}
-                style={{
-                  "--border-color": isDarkMode
-                    ? "var(--ion-color-step-300)"
-                    : "var(--ion-color-step-200)",
-                }}
-              >
-                <IonIcon icon={phonePortraitOutline} slot="start" />
-                <IonText style={{ fontSize: "12px", fontWeight: "500" }}>
-                  Device ({selectedDevices.length})
-                </IonText>
-              </IonButton>
-
-              {/* Category Filter */}
-              <IonButton
-                fill="outline"
-                size="small"
-                onClick={(e) => {
-                  setFilterType("category");
-                  setFilterPopoverEvent(e.nativeEvent);
-                  setShowFilterPopover(true);
-                }}
-                style={{
-                  "--border-color": isDarkMode
-                    ? "var(--ion-color-step-300)"
-                    : "var(--ion-color-step-200)",
-                }}
-              >
-                <IonIcon icon={gridOutline} slot="start" />
-                <IonText style={{ fontSize: "12px", fontWeight: "500" }}>
-                  Category ({selectedCategories.length})
-                </IonText>
-              </IonButton>
-
-              {/* Domain Filter */}
-              <IonButton
-                fill="outline"
-                size="small"
-                onClick={(e) => {
-                  setFilterType("domain");
-                  setFilterPopoverEvent(e.nativeEvent);
-                  setShowFilterPopover(true);
-                }}
-                style={{
-                  "--border-color": isDarkMode
-                    ? "var(--ion-color-step-300)"
-                    : "var(--ion-color-step-200)",
-                }}
-              >
-                <IonIcon icon={folderOpenOutline} slot="start" />
-                <IonText style={{ fontSize: "12px", fontWeight: "500" }}>
-                  Domain ({selectedDomains.length})
-                </IonText>
-              </IonButton>
+        <IonContent className="ion-padding">
+          {/* Loading State */}
+          {isLoading && (
+            <div style={{ textAlign: 'center', padding: '48px 16px' }}>
+              <IonSpinner name="crescent" style={{ width: '48px', height: '48px' }} />
+              <p style={{ marginTop: '16px', color: 'var(--ion-color-medium)' }}>Loading templates...</p>
             </div>
           )}
 
-          {/* Content based on active tab */}
-          <div style={{ padding: "16px" }}>
-            {activeTab === "favourites" && (
-              <>
-                {favoriteTemplatesList.length === 0 ? (
-                  <IonText color="medium">
-                    <p style={{ textAlign: "center", padding: "32px 16px" }}>
-                      No favourite templates yet. Click the heart icon on any template to add it here.
-                    </p>
-                  </IonText>
-                ) : (
-                  <div>
-                    {favoriteTemplatesList.map((template) =>
-                      renderTemplateItem(template, "favourites", false)
+          {/* Empty State */}
+          {!isLoading && userTemplates.length === 0 && (
+            <div style={{
+              textAlign: 'center',
+              padding: '48px 24px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '16px'
+            }}>
+              <IonIcon
+                icon={layersOutline}
+                style={{
+                  fontSize: '64px',
+                  color: 'var(--ion-color-medium)',
+                  opacity: 0.5
+                }}
+              />
+              <div>
+                <h2 style={{
+                  margin: '0 0 8px 0',
+                  fontSize: '20px',
+                  color: isDarkMode ? 'var(--ion-color-step-750)' : 'var(--ion-color-step-700)'
+                }}>
+                  No Saved Templates
+                </h2>
+                <p style={{
+                  margin: '0 0 24px 0',
+                  color: 'var(--ion-color-medium)',
+                  fontSize: '14px',
+                  maxWidth: '300px'
+                }}>
+                  You haven't saved any templates yet. Browse the template store to import templates.
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <IonButton fill="solid" onClick={navigateToTemplates}>
+                  <IonIcon icon={layersOutline} slot="start" />
+                  Browse Templates
+                </IonButton>
+              </div>
+            </div>
+          )}
+
+          {/* Templates List */}
+          {!isLoading && userTemplates.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {userTemplates.map((template, index) => (
+                <div
+                  key={`template-${template.id}-${index}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    background: isDarkMode
+                      ? 'var(--ion-color-step-50)'
+                      : 'var(--ion-background-color)',
+                    border: `1px solid ${isDarkMode ? 'var(--ion-color-step-200)' : 'var(--ion-color-step-150)'}`,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {/* Template Thumbnail */}
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    background: isDarkMode
+                      ? 'var(--ion-color-step-100)'
+                      : 'var(--ion-color-step-50)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: `1px solid ${isDarkMode ? 'var(--ion-color-step-200)' : 'var(--ion-color-step-100)'}`
+                  }}>
+                    {template.image ? (
+                      <img
+                        src={getImageSrc(template.image)}
+                        alt={template.name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <IonIcon
+                        icon={documentTextOutline}
+                        style={{ fontSize: '28px', color: 'var(--ion-color-medium)', opacity: 0.5 }}
+                      />
                     )}
                   </div>
-                )}
-              </>
-            )}
 
-            {activeTab === "yours" && (
-              <>
-                {onlineInvoices.length === 0 ? (
-                  <div style={{
-                    textAlign: "center",
-                    padding: "32px 16px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: "16px"
-                  }}>
-                    <IonText color="medium">
-                      <p style={{ margin: "0 0 8px 0" }}>
-                        No online invoices imported yet.
-                      </p>
-                      <p style={{ margin: "0", fontSize: "14px" }}>
-                        Import an invoice from the Invoice Store
-                      </p>
-                    </IonText>
+                  {/* Template Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h3 style={{
+                      margin: '0 0 4px 0',
+                      fontSize: '15px',
+                      fontWeight: '600',
+                      color: isDarkMode ? 'var(--ion-color-step-800)' : 'var(--ion-color-step-700)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {template.name}
+                    </h3>
+                    <p style={{
+                      margin: '0',
+                      fontSize: '13px',
+                      color: 'var(--ion-color-medium)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {template.description || 'Invoice Template'}
+                    </p>
+                    {template.type && (
+                      <span style={{
+                        display: 'inline-block',
+                        marginTop: '6px',
+                        fontSize: '10px',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        background: isDarkMode ? 'var(--ion-color-step-150)' : 'var(--ion-color-step-100)',
+                        color: 'var(--ion-color-medium)',
+                        textTransform: 'capitalize'
+                      }}>
+                        {template.type}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
                     <IonButton
-                      onClick={() => {
-                        handleModalClose();
-                        history.push("/app/invoice-store");
-                      }}
                       fill="solid"
-                      color="primary"
-                      style={{
-                        "--padding-start": "24px",
-                        "--padding-end": "24px",
-                      }}
+                      size="small"
+                      onClick={() => handleCreateFile(template)}
                     >
-                      <IonIcon icon={folderOpenOutline} slot="start" />
-                      Go to Invoice Store
+                      <IonIcon icon={createOutline} slot="start" />
+                      Create File
+                    </IonButton>
+                    <IonButton
+                      fill="outline"
+                      size="small"
+                      onClick={() => handleCreateJob(template)}
+                    >
+                      <IonIcon icon={briefcaseOutline} slot="start" />
+                      Create Job
                     </IonButton>
                   </div>
-                ) : (
-                  <div>
-                    {onlineInvoices.map((template) =>
-                      renderTemplateItem(template, "yours", true)
-                    )}
-                  </div>
-                )}
-              </>
-            )}            {activeTab === "default" && (
-              <>
-                {filteredTemplates.length === 0 ? (
-                  <IonText color="medium">
-                    <p style={{ textAlign: "center", padding: "32px 16px" }}>
-                      No templates found in this category.
-                    </p>
-                  </IonText>
-                ) : (
-                  <div>
-                    {filteredTemplates.map((template) =>
-                      renderTemplateItem(template, "template-modal", false)
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </IonContent>
       </IonModal>
-
-      {/* File Name Prompt Alert */}
-      {showFileNamePrompt &&
-        selectedTemplateForFile !== null &&
-        getTemplateMetadata(selectedTemplateForFile) && (
-          <IonAlert
-            animated
-            isOpen={true}
-            onDidDismiss={() => {
-              setShowFileNamePrompt(false);
-              setSelectedTemplateForFile(null);
-              setNewFileName("");
-            }}
-            header="Create New File"
-            message={`Create a new ${getTemplateMetadata(selectedTemplateForFile)?.name
-              } file`}
-            inputs={[
-              {
-                name: "filename",
-                type: "text",
-                value: newFileName,
-                placeholder: "Enter file name",
-              },
-            ]}
-            buttons={[
-              {
-                text: "Cancel",
-                role: "cancel",
-                handler: () => {
-                  setSelectedTemplateForFile(null);
-                  setNewFileName("");
-                },
-              },
-              {
-                text: "Create",
-                handler: async (data) => {
-                  const fileName = data.filename?.trim();
-                  if (!fileName) {
-                    setToastMessage("Please enter a file name");
-                    setShowToast(true);
-                    // Clear the filename and close the alert when validation fails
-                    setNewFileName("");
-                    setShowFileNamePrompt(false);
-                    setSelectedTemplateForFile(null);
-                    return false; // Prevent alert from closing automatically
-                  }
-
-                  if (selectedTemplateForFile) {
-                    // Validate the filename before creating
-                    const validation = await _validateName(fileName);
-                    if (!validation.isValid) {
-                      setToastMessage(validation.message);
-                      setShowToast(true);
-                      // Clear the filename and close the alert when validation fails
-                      setNewFileName("");
-                      setShowFileNamePrompt(false);
-                      setSelectedTemplateForFile(null);
-                      return false; // Prevent alert from closing automatically
-                    }
-
-                    // If validation passes, create the file
-                    await createNewFileWithTemplate(
-                      selectedTemplateForFile,
-                      fileName
-                    );
-                    return true; // Allow alert to close
-                  }
-                  return false;
-                },
-              },
-            ]}
-          />
-        )}
-
-      {/* Filter Popover */}
-      <IonPopover
-        isOpen={showFilterPopover}
-        event={filterPopoverEvent}
-        onDidDismiss={() => setShowFilterPopover(false)}
-      >
-        <IonList>
-          <IonItem lines="full">
-            <IonLabel>
-              <h2 style={{ fontWeight: "bold", marginBottom: "8px" }}>
-                Filter by {filterType === "device" ? "Device" : filterType === "category" ? "Category" : "Domain"}
-              </h2>
-            </IonLabel>
-          </IonItem>
-
-          {filterType === "device" &&
-            Array.from(new Set(tempMeta.map((t) => t.deviceType))).map((device) => (
-              <IonItem key={device}>
-                <IonLabel style={{ textTransform: "capitalize" }}>{device}</IonLabel>
-                <IonCheckbox
-                  slot="start"
-                  checked={selectedDevices.includes(device)}
-                  onIonChange={(e) => {
-                    if (e.detail.checked) {
-                      setSelectedDevices([...selectedDevices, device]);
-                    } else {
-                      setSelectedDevices(selectedDevices.filter((d) => d !== device));
-                    }
-                  }}
-                />
-              </IonItem>
-            ))}
-
-          {filterType === "category" &&
-            Array.from(new Set(tempMeta.map((t) => t.category))).map((category) => (
-              <IonItem key={category}>
-                <IonLabel style={{ textTransform: "capitalize" }}>
-                  {category.replace(/_/g, " ")}
-                </IonLabel>
-                <IonCheckbox
-                  slot="start"
-                  checked={selectedCategories.includes(category)}
-                  onIonChange={(e) => {
-                    if (e.detail.checked) {
-                      setSelectedCategories([...selectedCategories, category]);
-                    } else {
-                      setSelectedCategories(selectedCategories.filter((c) => c !== category));
-                    }
-                  }}
-                />
-              </IonItem>
-            ))}
-
-          {filterType === "domain" &&
-            Array.from(new Set(tempMeta.map((t) => t.domain))).map((domain) => (
-              <IonItem key={domain}>
-                <IonLabel style={{ textTransform: "capitalize" }}>
-                  {domain.replace(/_/g, " ")}
-                </IonLabel>
-                <IonCheckbox
-                  slot="start"
-                  checked={selectedDomains.includes(domain)}
-                  onIonChange={(e) => {
-                    if (e.detail.checked) {
-                      setSelectedDomains([...selectedDomains, domain]);
-                    } else {
-                      setSelectedDomains(selectedDomains.filter((d) => d !== domain));
-                    }
-                  }}
-                />
-              </IonItem>
-            ))}
-        </IonList>
-      </IonPopover>
 
       {/* Toast for notifications */}
       <IonToast

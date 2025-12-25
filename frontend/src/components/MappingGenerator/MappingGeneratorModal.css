@@ -1,0 +1,154 @@
+/* Make the modal appear as a right sidebar */
+ion-modal.mapping-modal-large {
+    --width: 450px;
+    --height: 100%;
+    --max-width: 500px;
+    --max-height: 100vh;
+    --border-radius: 0;
+    --box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+}
+
+ion-modal.mapping-modal-large::part(content) {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    margin: 0;
+    border-radius: 0;
+}
+
+ion-modal.mapping-modal-large::part(backdrop) {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+/* Animation for sidebar slide-in */
+ion-modal.mapping-modal-large {
+    --ion-animation-duration: 300ms;
+}
+
+ion-modal.mapping-modal-large .ion-page {
+    border-left: 1px solid var(--ion-color-step-200, #e0e0e0);
+}
+
+/* Card styling for mapping items */
+.mapping-card {
+    border-radius: 12px;
+    border: 1px solid var(--ion-color-step-150, #e0e0e0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.mapping-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: var(--ion-color-primary, #3880ff);
+}
+
+.mapping-header {
+    background: var(--ion-color-step-50, #f9f9f9);
+    padding: 6px 12px;
+    /* Reduced padding */
+    border-bottom: 1px solid var(--ion-color-step-100, #f0f0f0);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.mapping-header ion-button {
+    --padding-start: 4px;
+    --padding-end: 4px;
+    height: 32px;
+    width: 32px;
+}
+
+.mapping-header ion-icon {
+    font-size: 20px;
+    /* Bigger icons */
+}
+
+.mapping-key {
+    font-weight: 600;
+    color: var(--ion-color-dark);
+    font-size: 1.05em;
+}
+
+.mapping-content {
+    padding: 10px;
+    /* Reduced padding */
+}
+
+.mapping-nested-container {
+    background: var(--ion-color-step-50, #fafafa);
+    border-radius: 8px;
+    padding: 10px;
+    /* Reduced padding */
+    margin-top: 8px;
+    /* Reduced margin */
+    border: 1px dashed var(--ion-color-step-200, #d0d0d0);
+}
+
+/* Input styling enhancement */
+.mapping-input-wrapper {
+    background: var(--ion-color-light);
+    border-radius: 6px;
+    /* Slightly tighter radius */
+    padding: 2px 8px;
+    /* Significantly reduced padding */
+    border: 1px solid transparent;
+    transition: border-color 0.2s;
+    min-height: 36px;
+    /* Enforce usage height */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.mapping-input-wrapper ion-input,
+.mapping-input-wrapper ion-select {
+    --padding-top: 2px;
+    --padding-bottom: 2px;
+    --padding-start: 0;
+    min-height: 20px;
+}
+
+.mapping-input-wrapper:focus-within {
+    border-color: var(--ion-color-primary);
+    background: white;
+}
+
+.add-item-container {
+    background: white;
+    padding: 8px 12px;
+    /* Reduced padding */
+    border-radius: 8px;
+    border: 1px dashed var(--ion-color-primary, #3880ff);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    opacity: 0.9;
+}
+
+.add-item-container ion-button {
+    height: 36px;
+}
+
+.add-item-container ion-icon {
+    font-size: 20px;
+    /* Bigger add icon */
+}
+
+.add-item-container:hover {
+    opacity: 1;
+    background: var(--ion-color-step-50, #fafafa);
+}
+
+/* Responsive sidebar width */
+@media (max-width: 600px) {
+    ion-modal.mapping-modal-large {
+        --width: 100%;
+        --max-width: 100%;
+    }
+}

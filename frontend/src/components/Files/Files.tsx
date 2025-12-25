@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import "./Files.css";
 import * as AppGeneral from "../socialcalc/index.js";
-import { DATA } from "../../templates.js";
-import { File as LocalFile, Local } from "../Storage/LocalStorage";
+// import { DATA } from "../../templates.js";
+// import { tempMeta } from "../../templates-meta";
+import { TemplateMeta, TemplateData } from "../../types/template";
+// import { File as LocalFile, Local } from "../Storage/LocalStorage";
 import {
   IonIcon,
   IonItem,
@@ -61,6 +63,7 @@ import {
   copyOutline,
 } from "ionicons/icons";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { useHistory } from "react-router-dom";
 import { useInvoice } from "../../contexts/InvoiceContext";
 import {
@@ -68,10 +71,10 @@ import {
   isQuotaExceededError,
   getQuotaExceededMessage,
 } from "../../utils/helper";
-import { tempMeta } from "../../templates-meta";
+// import { tempMeta } from "../../templates-meta";
+import { storageApi } from "../../services/storage-api";
 
 const Files: React.FC<{
-  store: Local;
   file: string;
   updateSelectedFile: Function;
   updateBillType: Function;
@@ -83,6 +86,8 @@ const Files: React.FC<{
     updateActiveTemplateData,
   } = useInvoice();
   const { isDarkMode } = useTheme();
+  const { user } = useAuth();
+  const userId = user?.sub || 'default_user';
   const history = useHistory();
 
   const [showAlert1, setShowAlert1] = useState(false);
@@ -96,7 +101,7 @@ const Files: React.FC<{
   const [currentRenameKey, setCurrentRenameKey] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [fileSource, setFileSource] = useState<"local">("local");
+  // const [fileSource, setFileSource] = useState<"local" | "cloud">("cloud");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<
     "name" | "date" | "dateCreated" | "dateModified"
@@ -115,44 +120,64 @@ const Files: React.FC<{
 
   // Blockchain state removed - local-only mode
 
+  const [templates, setTemplates] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        const globals = await storageApi.fetchGlobalTemplates();
+        const users = await storageApi.fetchTemplates();
+        // Combine them or prefer global?
+        // tempMeta was previously the global list. 
+        // We should merge them or just use globals for categorization if IDs match?
+        // Let's combine them, filtering duplicates by ID.
+        const allTemplates = [...globals.items, ...users.items];
+        // Deduplicate by ID
+        const seen = new Set();
+        const unique = allTemplates.filter(t => {
+          const id = t.id;
+          if (seen.has(id)) return false;
+          seen.add(id);
+          return true;
+        });
+        setTemplates(unique);
+      } catch (e) {
+        console.error("Error loading templates in Files:", e);
+      }
+    };
+    loadTemplates();
+  }, []);
+
   // Template helper functions
   const getAvailableTemplates = () => {
-    // map tempMeta.template_id and tempMeta.tempate_name with templateId and template resp
-    return tempMeta.map((template) => ({
-      templateId: template.template_id,
+    // map templates.template_id and templates.tempate_name with templateId and template resp
+    return templates.map((template) => ({
+      templateId: template.id,
       template: template.name,
-      ImageUri: template.ImageUri,
+      ImageUri: template.image,
     }));
   };
 
   // Category helper functions
   const categorizeTemplate = (template_id: number) => {
-    const metadata = tempMeta.find((meta) => meta.template_id === template_id);
-    if (!metadata?.category) return "web";
-
-    const category = metadata.category.toLowerCase();
-    if (category === "mobile") {
-      return "mobile";
-    } else if (category === "tablet") {
-      return "tablet";
-    } else {
-      return "web";
-    }
+    const metadata = templates.find((meta) => (meta.id === template_id));
+    if (!metadata?.type) return "invoice"; // default to invoice
+    return metadata.type;
   };
 
   const getAvailableCategories = () => {
     const categories = new Set<string>();
-    tempMeta.forEach((template) => {
-      if (template.category) {
-        categories.add(template.category);
+    templates.forEach((template) => {
+      if (template.type) {
+        categories.add(template.type);
       }
     });
     return Array.from(categories).sort();
   };
 
   const getTemplateInfo = (templateId: number) => {
-    const template = DATA[templateId];
-    return template ? template.template : `Template ${templateId}`;
+    const meta = templates.find(t => (t.id === templateId));
+    return meta ? meta.name : `Template ${templateId}`;
   };
 
   // Edit local file
@@ -160,7 +185,7 @@ const Files: React.FC<{
     // Create a temporary anchor element to navigate
     setTimeout(() => {
       const link = document.createElement("a");
-      link.href = `/app/editor/${key}`;
+      link.href = `/app/editor/${key}`; // navigation remains same, Editor will handle loading
       link.click();
     }, 50);
   };
@@ -353,12 +378,13 @@ const Files: React.FC<{
     } else if (/^[a-zA-Z0-9- ]*$/.test(filename) === false) {
       setToastMessage("Special Characters cannot be used");
       return false;
-    } else if (
-      (await props.store._checkKey(filename)) &&
-      filename !== excludeKey
-    ) {
-      setToastMessage("Filename already exists");
-      return false;
+    } else {
+      // Always cloud check
+      const existing = await storageApi.fetchInvoice(filename, userId);
+      if (existing && filename !== excludeKey) {
+        setToastMessage("Filename already exists in cloud");
+        return false;
+      }
     }
     return true;
   };
@@ -386,26 +412,14 @@ const Files: React.FC<{
 
     if (await _validateName(newFileName, currentRenameKey)) {
       try {
-        // Get the existing file data
-        const fileData = await props.store._getFile(currentRenameKey);
-
-        // Create a new file with the new name, preserving all original metadata including templateId
-        const renamedFile = new LocalFile(
-          fileData.created, // Keep the original creation date
-          new Date().toISOString(), // Use ISO string for modified date
-          fileData.content,
-          newFileName,
-          fileData.billType,
-          fileData.templateId || fileData.billType, // Preserve templateId, fallback to billType for backward compatibility
-          fileData.isEncrypted || false,
-          fileData.password
-        );
-
-        // Save the new file
-        await props.store._saveFile(renamedFile);
-
-        // Delete the old file
-        await props.store._deleteFile(currentRenameKey);
+        // Always cloud logic
+        const fileData = await storageApi.fetchInvoice(currentRenameKey, userId);
+        if (fileData) {
+          // Save new file
+          await storageApi.saveInvoice(newFileName, fileData.content, fileData.template_id, fileData.bill_type, userId);
+          // Delete old file
+          await storageApi.deleteInvoice(currentRenameKey, userId);
+        }
 
         // Update selected file if it was the renamed file
         if (selectedFile === currentRenameKey) {
@@ -445,41 +459,36 @@ const Files: React.FC<{
 
   // Render file list
   const renderFileList = async () => {
+    setServerFilesLoading(true);
     let content;
-    if (fileSource === "local") {
-      const localFiles = await props.store._getAllFiles();
+    try {
+      let filesArray: any[] = [];
 
-      const filesArray = Object.keys(localFiles).map((key) => {
-        const fileData = localFiles[key];
-
-        // Ensure dates are properly converted - handle both ISO strings and Date.toString() formats
-        let createdDate = fileData.created;
-        let modifiedDate = fileData.modified;
-
-        // If the date looks like a Date.toString() format, try to parse it
-        // Date.toString() typically looks like "Mon Jul 06 2025 10:30:00 GMT+0000 (UTC)"
-        if (typeof createdDate === "string" && createdDate.includes("GMT")) {
-          createdDate = new Date(createdDate).toISOString();
-        }
-        if (typeof modifiedDate === "string" && modifiedDate.includes("GMT")) {
-          modifiedDate = new Date(modifiedDate).toISOString();
-        }
-
-        return {
-          key,
-          name: key,
-          date: modifiedDate, // For backward compatibility
-          dateCreated: createdDate,
-          dateModified: modifiedDate,
-          type: "local",
-          templateMetadata: fileData.templateId
-            ? {
-              templateId: fileData.templateId,
-              template: getTemplateInfo(fileData.templateId),
-            }
-            : null,
-        };
-      });
+      // Always cloud files
+      try {
+        const apiInvoices = await storageApi.fetchInvoices(userId);
+        filesArray = apiInvoices.map((inv: any) => ({
+          key: inv.filename?.replace('.json', '') || inv.filename,
+          name: inv.invoice_name || inv.filename?.replace('.json', '') || inv.filename,
+          date: inv.modified_at || inv.last_modified,
+          dateCreated: inv.created_at || inv.last_modified,
+          dateModified: inv.modified_at || inv.last_modified,
+          type: "cloud",
+          // Extended invoice metadata
+          invoiceId: inv.invoice_id,
+          invoiceName: inv.invoice_name,
+          status: inv.status || 'draft',
+          invoiceNumber: inv.invoice_number,
+          total: inv.total,
+          templateMetadata: inv.template_id ? {
+            templateId: inv.template_id,
+            template: getTemplateInfo(inv.template_id)
+          } : null
+        }));
+      } catch (err) {
+        console.error("Failed to fetch cloud invoices", err);
+        // handle error or show empty
+      }
 
       // Filter by category if a specific category is selected
       let filteredFiles = filesArray;
@@ -489,7 +498,7 @@ const Files: React.FC<{
           const templateCategory = categorizeTemplate(
             file.templateMetadata.templateId
           );
-          return templateCategory === selectedCategoryFilter.toLowerCase();
+          return templateCategory === selectedCategoryFilter; // Exact match for type
         });
       }
 
@@ -501,7 +510,7 @@ const Files: React.FC<{
           ? `No files found matching "${searchQuery}"`
           : selectedCategoryFilter !== "all"
             ? `No files found for ${selectedCategoryFilter} category`
-            : "No local files found";
+            : "No cloud invoices found";
 
         content = (
           <IonList style={{ border: "none" }} lines="none">
@@ -514,17 +523,37 @@ const Files: React.FC<{
         const sortedFiles = sortFiles(filteredFiles, sortBy);
 
         if (sortBy === "name") {
-          // For name sorting, show files in a simple list without date grouping
           content = (
             <IonGrid className="files-grid-container">
               <IonRow>
                 {sortedFiles.map((file) => (
-                  <IonCol size="12" sizeSm="6" sizeMd="4" sizeLg="3" key={`local-${file.key}`}>
+                  <IonCol size="12" sizeSm="6" sizeMd="6" sizeLg="4" key={`cloud-${file.key}`}>
                     <IonCard className="file-card" onClick={() => editFile(file.key)}>
                       <IonCardContent className="file-card-content">
                         <div className="file-card-header">
                           <div className="file-icon-wrapper">
-                            <IonIcon icon={documentText} className="file-icon-card" />
+                            <IonIcon icon={cloudOutline} className="file-icon-card" />
+                          </div>
+                          <div className="file-info">
+                            <h3 className="file-name" title={file.name}>{file.name}</h3>
+                            <div className="file-meta-row">
+                              {file.status && (
+                                <IonChip
+                                  className="file-status-chip"
+                                  color={file.status === 'paid' ? 'success' : file.status === 'sent' ? 'primary' : 'medium'}
+                                >
+                                  {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                                </IonChip>
+                              )}
+                              {file.total !== null && file.total !== undefined && (
+                                <span className="file-total">
+                                  ${file.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                              )}
+                            </div>
+                            <p className="file-date">
+                              {_formatDate(getLocalFileDateInfo(file).value)}
+                            </p>
                           </div>
                           <div className="file-actions">
                             <IonButton
@@ -552,12 +581,6 @@ const Files: React.FC<{
                             </IonButton>
                           </div>
                         </div>
-                        <div className="file-info">
-                          <h3 className="file-name" title={file.name}>{file.name}</h3>
-                          <p className="file-date">
-                            {getLocalFileDateInfo(file).label}: {_formatDate(getLocalFileDateInfo(file).value)}
-                          </p>
-                        </div>
                       </IonCardContent>
                     </IonCard>
                   </IonCol>
@@ -566,22 +589,42 @@ const Files: React.FC<{
             </IonGrid>
           );
         } else {
-          // For date and recent sorting, group by date
           const groupedFiles = groupFilesByDate(sortedFiles, sortBy);
           content = (
             <div className="files-grid-container">
               {Object.entries(groupedFiles).map(([dateHeader, files]) => (
-                <div key={`local-group-${dateHeader}`} className="date-group">
+                <div key={`cloud-group-${dateHeader}`} className="date-group">
                   <h3 className="date-header">{dateHeader}</h3>
                   <IonGrid>
                     <IonRow>
                       {(files as any[]).map((file) => (
-                        <IonCol size="12" sizeSm="6" sizeMd="4" sizeLg="3" key={`local-${file.key}`}>
+                        <IonCol size="12" sizeSm="6" sizeMd="6" sizeLg="4" key={`cloud-${file.key}`}>
                           <IonCard className="file-card" onClick={() => editFile(file.key)}>
                             <IonCardContent className="file-card-content">
                               <div className="file-card-header">
                                 <div className="file-icon-wrapper">
-                                  <IonIcon icon={documentText} className="file-icon-card" />
+                                  <IonIcon icon={cloudOutline} className="file-icon-card" />
+                                </div>
+                                <div className="file-info">
+                                  <h3 className="file-name" title={file.name}>{file.name}</h3>
+                                  <div className="file-meta-row">
+                                    {file.status && (
+                                      <IonChip
+                                        className="file-status-chip"
+                                        color={file.status === 'paid' ? 'success' : file.status === 'sent' ? 'primary' : 'medium'}
+                                      >
+                                        {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                                      </IonChip>
+                                    )}
+                                    {file.total !== null && file.total !== undefined && (
+                                      <span className="file-total">
+                                        ${file.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="file-date">
+                                    {_formatDate(getLocalFileDateInfo(file).value)}
+                                  </p>
                                 </div>
                                 <div className="file-actions">
                                   <IonButton
@@ -609,12 +652,6 @@ const Files: React.FC<{
                                   </IonButton>
                                 </div>
                               </div>
-                              <div className="file-info">
-                                <h3 className="file-name" title={file.name}>{file.name}</h3>
-                                <p className="file-date">
-                                  {getLocalFileDateInfo(file).label}: {_formatDate(getLocalFileDateInfo(file).value)}
-                                </p>
-                              </div>
                             </IonCardContent>
                           </IonCard>
                         </IonCol>
@@ -627,6 +664,8 @@ const Files: React.FC<{
           );
         }
       }
+    } finally {
+      setServerFilesLoading(false);
     }
     setFileListContent(content);
   };
@@ -635,11 +674,9 @@ const Files: React.FC<{
     renderFileList();
     // eslint-disable-next-line
   }, [
-    props.file,
-    fileSource,
+    // fileSource, // removed
     searchQuery,
     sortBy,
-    serverFilesLoading,
     selectedCategoryFilter,
   ]);
 
@@ -655,18 +692,22 @@ const Files: React.FC<{
   }, []);
 
   // Reset sort option when switching file sources to ensure compatibility
-  useEffect(() => {
-    if (sortBy === "date") {
-      setSortBy("dateModified");
-    }
-  }, [fileSource]);
+  // Reset sort option when switching file sources to ensure compatibility
+  // useEffect(() => {
+  //   if (sortBy === "date") {
+  //     setSortBy("dateModified");
+  //   }
+  // }, [fileSource]);
 
   return (
     <div>
       <div>
         <div className="files-modal-content">
-          {/* File Source Tabs - Removed */}
           <div style={{ padding: "0 16px 16px 16px" }}>
+            <div style={{ width: '100%', marginBottom: '16px' }}>
+              {/* Local tab removed */}
+            </div>
+
             <div
               style={{
                 display: "flex",
@@ -784,22 +825,8 @@ const Files: React.FC<{
                     }}
                     interface="popover"
                   >
-                    {fileSource === "local" ? (
-                      <>
-                        <IonSelectOption value="dateModified">
-                          By Date Modified
-                        </IonSelectOption>
-                        <IonSelectOption value="dateCreated">
-                          By Date Created
-                        </IonSelectOption>
-                        <IonSelectOption value="name">By Name</IonSelectOption>
-                      </>
-                    ) : (
-                      <>
-                        <IonSelectOption value="date">By Date</IonSelectOption>
-                        <IonSelectOption value="name">By Name</IonSelectOption>
-                      </>
-                    )}
+                    <IonSelectOption value="date">By Date</IonSelectOption>
+                    <IonSelectOption value="name">By Name</IonSelectOption>
                   </IonSelect>
                 )}
                 {isSmallScreen && (
@@ -816,22 +843,8 @@ const Files: React.FC<{
                     }}
                     interface="popover"
                   >
-                    {fileSource === "local" ? (
-                      <>
-                        <IonSelectOption value="dateModified">
-                          By Date Modified
-                        </IonSelectOption>
-                        <IonSelectOption value="dateCreated">
-                          By Date Created
-                        </IonSelectOption>
-                        <IonSelectOption value="name">By Name</IonSelectOption>
-                      </>
-                    ) : (
-                      <>
-                        <IonSelectOption value="date">By Date</IonSelectOption>
-                        <IonSelectOption value="name">By Name</IonSelectOption>
-                      </>
-                    )}
+                    <IonSelectOption value="date">By Date</IonSelectOption>
+                    <IonSelectOption value="name">By Name</IonSelectOption>
                   </IonSelect>
                 )}
               </div>
@@ -862,7 +875,8 @@ const Files: React.FC<{
             text: "Yes",
             handler: async () => {
               if (currentKey) {
-                await props.store._deleteFile(currentKey);
+                // Always cloud
+                await storageApi.deleteInvoice(currentKey, userId);
                 setCurrentKey(null);
                 await renderFileList();
               }

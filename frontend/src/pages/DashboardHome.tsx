@@ -22,7 +22,7 @@ import {
 import { useTheme } from '../contexts/ThemeContext';
 import { useInvoice } from '../contexts/InvoiceContext';
 import { useHistory } from 'react-router-dom';
-import { tempMeta } from '../templates-meta';
+// import { tempMeta } from '../templates-meta';
 import DashboardStats from '../components/Dashboard/DashboardStats';
 import RevenueChart from '../components/Dashboard/RevenueChart';
 import TopItemsChart from '../components/Dashboard/TopItemsChart';
@@ -118,7 +118,7 @@ const DashboardHome: React.FC = () => {
     };
 
     const getTemplateMetadata = (templateId: number) => {
-        return tempMeta.find((meta) => meta.template_id === templateId);
+        return null; // tempMeta removed
     };
 
     if (loading) {

@@ -20,44 +20,21 @@ export interface ChatRequest {
 
 // New response structure
 export interface TemplateMeta {
+    id?: number;
     name: string;
-    domain: string;
-    category: 'tax_invoice' | 'simple_invoice' | 'professional_invoice';
-    deviceType: 'mobile' | 'tablet' | 'desktop';
+    type: "invoice" | "receipt" | "purchase_order" | "quotation" | "other";
+    device: "mobile" | "tablet" | "desktop";
     description?: string;
+    isPremium?: boolean;
+    price?: { [key: string]: number };
+    image?: string;
 }
 
+import { TemplateData, AppMappingItem } from "../types/template";
+
 export interface CellMappings {
-    logo?: {
-        sheet1: string;
-    };
-    signature?: {
-        sheet1: string;
-    };
-    text: {
-        sheet1: {
-            Heading?: string;
-            Date?: string;
-            InvoiceNumber?: string;
-            From?: Record<string, string>;
-            BillTo?: Record<string, string>;
-            Items?: {
-                Name: string;
-                Heading: string;
-                Subheading: string;
-                Rows: {
-                    start: number;
-                    end: number;
-                };
-                Columns: Record<string, string>;
-            };
-            Subtotal?: string;
-            Tax?: string;
-            Total?: string;
-            Notes?: string;
-            PaymentTerms?: string;
-            [key: string]: any;
-        };
+    [sheetName: string]: {
+        [header: string]: AppMappingItem;
     };
 }
 

@@ -1,7 +1,14 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/:path((?!api|assets|images|legacy|invoices).*)",
+      "has": [
+        {
+          "type": "header",
+          "key": "accept",
+          "value": "text/html.*"
+        }
+      ],
       "destination": "/index.html"
     }
   ],

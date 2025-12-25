@@ -10,7 +10,7 @@ export class File {
   billType: number;
   isEncrypted: boolean;
   password?: string;
-  templateId: number;
+  templateId: number | string;
 
   constructor(
     created: string,
@@ -18,7 +18,7 @@ export class File {
     content: string,
     name: string,
     billType: number,
-    templateIdOrIsEncrypted?: number | boolean,
+    templateIdOrIsEncrypted?: number | string | boolean,
     isEncryptedOrPassword?: boolean | string,
     password?: string
   ) {
@@ -36,7 +36,7 @@ export class File {
       this.templateId = billType; // Use billType as default template ID for backward compatibility
     } else {
       // New constructor signature: (created, modified, content, name, billType, templateId, isEncrypted, password)
-      this.templateId = templateIdOrIsEncrypted || billType;
+      this.templateId = (templateIdOrIsEncrypted as number | string) || billType;
       this.isEncrypted = (isEncryptedOrPassword as boolean) || false;
       this.password = password;
     }
@@ -144,7 +144,7 @@ export class Local {
   };
 
   // Get files by template ID
-  _getFilesByTemplate = async (templateId: number) => {
+  _getFilesByTemplate = async (templateId: number | string) => {
     const allFiles = await this._getAllFiles();
     const templateFiles = {};
 
@@ -158,7 +158,7 @@ export class Local {
   };
 
   // Get template ID for a specific file
-  _getTemplateId = async (fileName: string): Promise<number | null> => {
+  _getTemplateId = async (fileName: string): Promise<number | string | null> => {
     try {
       const data = await this._getFile(fileName);
       return data.templateId || null;
@@ -168,7 +168,7 @@ export class Local {
   };
 
   // Update template ID for a file
-  _updateTemplateId = async (fileName: string, templateId: number) => {
+  _updateTemplateId = async (fileName: string, templateId: number | string) => {
     try {
       const data = await this._getFile(fileName);
       data.templateId = templateId;
@@ -276,7 +276,7 @@ export class Local {
 
       // Remove if already exists
       onlineTemplates = onlineTemplates.filter(
-        (t) => t.template_id !== templateMeta.template_id
+        (t) => t.id !== templateMeta.id
       );
 
       // Add the new/updated metadata

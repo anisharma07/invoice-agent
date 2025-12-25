@@ -2,12 +2,14 @@
 
 interface AppSettings {
   autoSaveEnabled: boolean;
+  defaultCurrency: string;
 }
 
 const SETTINGS_KEY = "app_settings";
 
 const defaultSettings: AppSettings = {
   autoSaveEnabled: false, // Default to disabled
+  defaultCurrency: 'USD'
 };
 
 export const getSettings = (): AppSettings => {
@@ -39,4 +41,12 @@ export const getAutoSaveEnabled = (): boolean => {
 
 export const setAutoSaveEnabled = (enabled: boolean): void => {
   saveSettings({ autoSaveEnabled: enabled });
+};
+
+export const getDefaultCurrency = (): string => {
+  return getSettings().defaultCurrency;
+};
+
+export const setDefaultCurrency = (currency: string): void => {
+  saveSettings({ defaultCurrency: currency });
 };

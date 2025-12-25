@@ -1,2084 +1,619 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   IonContent,
-  IonHeader,
   IonPage,
-  IonTitle,
-  IonToolbar,
-  IonButtons,
-  IonIcon,
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
-  IonCardTitle,
-  IonButton,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonModal,
   IonToast,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonRange,
-  IonPopover,
-  IonToggle,
+  IonModal,
+  IonButton,
 } from "@ionic/react";
-import {
-  saveOutline,
-  settings,
-  informationCircle,
-  createOutline,
-  add,
-  checkmark,
-  pencil,
-  trash,
-  cloudUploadOutline,
-  imageOutline,
-  downloadOutline,
-  wifiOutline,
-  cloudOfflineOutline,
-  arrowBack,
-  flash,
-} from "ionicons/icons";
 import SignatureCanvas from "react-signature-canvas";
-import Menu from "../components/Menu/Menu";
-import ServiceManager from "../components/Settings/ServiceManager";
 import { useTheme } from "../contexts/ThemeContext";
-import { useHistory } from "react-router-dom";
-import { usePWA } from "../hooks/usePWA";
-import { getAutoSaveEnabled, setAutoSaveEnabled } from "../utils/settings";
+import { getDefaultCurrency, setDefaultCurrency } from "../utils/settings";
 import "./SettingsPage.css";
 
+// Custom SVG Icons
+const InvoiceIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="8" y1="13" x2="16" y2="13" />
+    <line x1="8" y1="17" x2="13" y2="17" />
+    <line x1="8" y1="9" x2="10" y2="9" />
+  </svg>
+);
+
+const AutoNumberIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 6v6l4 2" />
+  </svg>
+);
+
+const FormatIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    <line x1="3" y1="9" x2="21" y2="9" />
+    <line x1="9" y1="21" x2="9" y2="9" />
+  </svg>
+);
+
+const NumberIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="4" y1="9" x2="20" y2="9" />
+    <line x1="4" y1="15" x2="20" y2="15" />
+    <line x1="10" y1="3" x2="8" y2="21" />
+    <line x1="16" y1="3" x2="14" y2="21" />
+  </svg>
+);
+
+const ResetIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="23 4 23 10 17 10" />
+    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+  </svg>
+);
+
+const CurrencyIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="6" x2="12" y2="18" />
+    <path d="M9 10a2 2 0 0 1 2-2h2a2 2 0 0 1 0 4h-2a2 2 0 0 0 0 4h2a2 2 0 0 0 2-2" />
+  </svg>
+);
+
+const SettingsGearIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  </svg>
+);
+
+const PreviewIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+const SignatureIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 17c3-3 5 2 8 0s5-5 8-2" />
+    <line x1="3" y1="21" x2="21" y2="21" />
+  </svg>
+);
+
+const LogoIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    <circle cx="8.5" cy="8.5" r="1.5" />
+    <polyline points="21 15 16 10 5 21" />
+  </svg>
+);
+
+const PlusIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const UploadIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="17 8 12 3 7 8" />
+    <line x1="12" y1="3" x2="12" y2="15" />
+  </svg>
+);
+
+// Toggle Switch Component
+const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (val: boolean) => void }) => (
+  <button
+    className={`settings-toggle ${checked ? 'active' : ''}`}
+    onClick={() => onChange(!checked)}
+    role="switch"
+    aria-checked={checked}
+  >
+    <span className="settings-toggle-track">
+      <span className="settings-toggle-thumb" />
+    </span>
+  </button>
+);
+
+// Select Component
+const Select = ({
+  value,
+  onChange,
+  options
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  options: { value: string; label: string }[]
+}) => (
+  <select
+    className="settings-select"
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+  >
+    {options.map(opt => (
+      <option key={opt.value} value={opt.value}>{opt.label}</option>
+    ))}
+  </select>
+);
+
+interface SavedItem {
+  id: string;
+  data: string;
+  name: string;
+}
+
 const SettingsPage: React.FC = () => {
-  const [showMenu, setShowMenu] = useState(false);
-  const { } = useTheme();
-  const isDarkMode = false;
-  const history = useHistory();
+  const { isDarkMode } = useTheme();
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [globalAutoSaveEnabled, setGlobalAutoSaveEnabled] = useState(getAutoSaveEnabled());
 
-  const { isInstallable, isInstalled, isOnline, installApp } = usePWA();
+  // Invoice settings state
+  const [autoAddInvoiceNumber, setAutoAddInvoiceNumber] = useState(true);
+  const [invoiceFormat, setInvoiceFormat] = useState("invoice-date-timestamp");
+  const [startingNumber, setStartingNumber] = useState("1");
+  const [resetFrequency, setResetFrequency] = useState("never");
+  const [currency, setCurrency] = useState(getDefaultCurrency());
 
   // Signature state
   const [showSignatureModal, setShowSignatureModal] = useState(false);
-  const [penColor, setPenColor] = useState("#000000");
-  const [penWidth, setPenWidth] = useState(2);
+  const [savedSignatures, setSavedSignatures] = useState<SavedItem[]>([]);
+  const [selectedSignatureId, setSelectedSignatureId] = useState<string | null>(null);
   const signatureRef = useRef<SignatureCanvas>(null);
-  const [savedSignatures, setSavedSignatures] = useState<
-    Array<{ id: string; data: string; name: string }>
-  >([]);
-  const [selectedSignatureId, setSelectedSignatureId] = useState<string | null>(
-    null
-  );
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [editingSignatureId, setEditingSignatureId] = useState<string | null>(
-    null
-  );
-  const [showUploadSignatureModal, setShowUploadSignatureModal] =
-    useState(false);
-  const [selectedSignatureFile, setSelectedSignatureFile] =
-    useState<File | null>(null);
-  const [uploadPreview, setUploadPreview] = useState<string | null>(null);
+  const [penColor, setPenColor] = useState("#000000");
 
   // Logo state
-  const [showLogoModal, setShowLogoModal] = useState(false);
-  const [savedLogos, setSavedLogos] = useState<
-    Array<{ id: string; data: string; name: string }>
-  >([]);
+  const [savedLogos, setSavedLogos] = useState<SavedItem[]>([]);
   const [selectedLogoId, setSelectedLogoId] = useState<string | null>(null);
-  const [editingLogoId, setEditingLogoId] = useState<string | null>(null);
-  const [showUploadLogoModal, setShowUploadLogoModal] = useState(false);
-  const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
-  const [logoUploadPreview, setLogoUploadPreview] = useState<string | null>(
-    null
-  );
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
-  // Available pen colors
-  const penColors = [
-    { name: "Black", value: "#000000" },
-    { name: "Blue", value: "#0066CC" },
-    { name: "Red", value: "#CC0000" },
-    { name: "Green", value: "#00AA00" },
-    { name: "Purple", value: "#6600CC" },
-    { name: "Brown", value: "#8B4513" },
-  ];
-
-  // Load saved signatures from localStorage on component mount
-  React.useEffect(() => {
-    const saved = localStorage.getItem("userSignatures");
-    if (saved) {
+  // Load saved signatures and logos from localStorage
+  useEffect(() => {
+    const loadedSignatures = localStorage.getItem("userSignatures");
+    if (loadedSignatures) {
       try {
-        const signatures = JSON.parse(saved);
-        setSavedSignatures(signatures);
-      } catch (error) {
-        // Error parsing saved signatures, use empty array
-        setSavedSignatures([]);
-      }
+        setSavedSignatures(JSON.parse(loadedSignatures));
+      } catch (e) { }
     }
+    const selectedSig = localStorage.getItem("selectedSignatureId");
+    if (selectedSig) setSelectedSignatureId(selectedSig);
 
-    // Load selected signature ID
-    const selectedId = localStorage.getItem("selectedSignatureId");
-    if (selectedId) {
-      setSelectedSignatureId(selectedId);
+    const loadedLogos = localStorage.getItem("userLogos");
+    if (loadedLogos) {
+      try {
+        setSavedLogos(JSON.parse(loadedLogos));
+      } catch (e) { }
     }
+    const selectedLg = localStorage.getItem("selectedLogoId");
+    if (selectedLg) setSelectedLogoId(selectedLg);
   }, []);
 
-  // Load saved logos from localStorage on component mount
-  React.useEffect(() => {
-    const saved = localStorage.getItem("userLogos");
-    if (saved) {
-      try {
-        const logos = JSON.parse(saved);
-        setSavedLogos(logos);
-      } catch (error) {
-        // Error parsing saved logos, use empty array
-        setSavedLogos([]);
-      }
-    }
-
-    // Load selected logo ID
-    const selectedId = localStorage.getItem("selectedLogoId");
-    if (selectedId) {
-      setSelectedLogoId(selectedId);
-    }
-  }, []);
-
-  // Load signature data when editing
-  React.useEffect(() => {
-    if (editingSignatureId && showSignatureModal && signatureRef.current) {
-      const signatureToEdit = savedSignatures.find(
-        (sig) => sig.id === editingSignatureId
-      );
-      if (signatureToEdit) {
-        // Clear the canvas first
-        signatureRef.current.clear();
-        // Create an image and load the signature data
-        const img = new Image();
-        img.onload = () => {
-          const canvas = signatureRef.current?.getCanvas();
-          const ctx = canvas?.getContext("2d");
-          if (canvas && ctx) {
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          }
-        };
-        img.src = signatureToEdit.data;
-      }
-    }
-  }, [editingSignatureId, showSignatureModal, savedSignatures]);
-
-  // Fix canvas sizing and positioning when modal opens
-  React.useEffect(() => {
-    if (showSignatureModal && signatureRef.current) {
-      const canvas = signatureRef.current.getCanvas();
-      const container = canvas.parentElement;
-
-      if (container) {
-        // Ensure canvas dimensions match its display size
-        const resizeCanvas = () => {
-          const rect = container.getBoundingClientRect();
-          const dpr = window.devicePixelRatio || 1;
-
-          // Set actual canvas size in memory (scaled for high DPI)
-          canvas.width = 500 * dpr;
-          canvas.height = 200 * dpr;
-
-          // Scale the drawing context back down
-          const ctx = canvas.getContext("2d");
-          if (ctx) {
-            ctx.scale(dpr, dpr);
-            // Restore signature if editing
-            if (editingSignatureId) {
-              const signatureToEdit = savedSignatures.find(
-                (sig) => sig.id === editingSignatureId
-              );
-              if (signatureToEdit) {
-                const img = new Image();
-                img.onload = () => {
-                  ctx.clearRect(0, 0, canvas.width, canvas.height);
-                  ctx.drawImage(img, 0, 0, 500, 200);
-                };
-                img.src = signatureToEdit.data;
-              }
-            }
-          }
-
-          // Set CSS size
-          canvas.style.width = "100%";
-          canvas.style.height = "200px";
-        };
-
-        // Initial resize
-        setTimeout(resizeCanvas, 100);
-
-        // Handle window resize
-        window.addEventListener("resize", resizeCanvas);
-
-        return () => {
-          window.removeEventListener("resize", resizeCanvas);
-        };
-      }
-    }
-  }, [showSignatureModal, editingSignatureId, savedSignatures]);
-
-  // Utility function to trim canvas
-  const getTrimmedCanvas = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return canvas;
-
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-    let minX = canvas.width;
-    let minY = canvas.height;
-    let maxX = 0;
-    let maxY = 0;
-
-    // Find the bounding box of non-transparent pixels
-    for (let y = 0; y < canvas.height; y++) {
-      for (let x = 0; x < canvas.width; x++) {
-        const alpha = data[(y * canvas.width + x) * 4 + 3];
-        if (alpha > 0) {
-          minX = Math.min(minX, x);
-          minY = Math.min(minY, y);
-          maxX = Math.max(maxX, x);
-          maxY = Math.max(maxY, y);
-        }
-      }
-    }
-
-    // If no content found, return original canvas
-    if (minX >= maxX || minY >= maxY) {
-      return canvas;
-    }
-
-    // Add some padding
-    const padding = 10;
-    minX = Math.max(0, minX - padding);
-    minY = Math.max(0, minY - padding);
-    maxX = Math.min(canvas.width, maxX + padding);
-    maxY = Math.min(canvas.height, maxY + padding);
-
-    // Create trimmed canvas
-    const trimmedCanvas = document.createElement("canvas");
-    const trimmedCtx = trimmedCanvas.getContext("2d");
-    if (!trimmedCtx) return canvas;
-
-    trimmedCanvas.width = maxX - minX;
-    trimmedCanvas.height = maxY - minY;
-
-    // Fill with white background
-    trimmedCtx.fillStyle = "white";
-    trimmedCtx.fillRect(0, 0, trimmedCanvas.width, trimmedCanvas.height);
-
-    // Draw the trimmed signature
-    trimmedCtx.drawImage(
-      canvas,
-      minX,
-      minY,
-      maxX - minX,
-      maxY - minY,
-      0,
-      0,
-      trimmedCanvas.width,
-      trimmedCanvas.height
-    );
-
-    return trimmedCanvas;
-  };
-
-  // Signature handling functions
-  const handleSaveSignature = () => {
-    if (!signatureRef.current) {
-      setToastMessage("Signature canvas not available");
-      setShowToast(true);
-      return;
-    }
-
-    if (signatureRef.current.isEmpty()) {
-      setToastMessage("Please draw a signature first");
-      setShowToast(true);
-      return;
-    }
-
-    try {
-      // Get the original canvas and trim it
-      const originalCanvas = signatureRef.current.getCanvas();
-      const trimmedCanvas = getTrimmedCanvas(originalCanvas);
-      const signatureData = trimmedCanvas.toDataURL("image/png", 0.9);
-
-      if (signatureData) {
-        const newSignature = {
-          id: editingSignatureId || Date.now().toString(),
-          data: signatureData,
-          name: editingSignatureId
-            ? `Signature ${editingSignatureId}`
-            : `Signature ${Date.now()}`,
-        };
-
-        let updatedSignatures;
-        if (editingSignatureId) {
-          // Update existing signature
-          updatedSignatures = savedSignatures.map((sig) =>
-            sig.id === editingSignatureId ? newSignature : sig
-          );
-        } else {
-          // Check if we're at the limit before adding
-          if (savedSignatures.length >= 3) {
-            setToastMessage(
-              "Maximum 3 signatures can be stored. Please delete an existing signature to add a new one."
-            );
-            setShowToast(true);
-            return;
-          }
-          // Add new signature
-          updatedSignatures = [...savedSignatures, newSignature];
-        }
-
-        setSavedSignatures(updatedSignatures);
-        localStorage.setItem(
-          "userSignatures",
-          JSON.stringify(updatedSignatures)
-        );
-
-        // Set as selected if it's the first one or if editing
-        if (updatedSignatures.length === 1 || editingSignatureId) {
-          setSelectedSignatureId(newSignature.id);
-          localStorage.setItem("selectedSignatureId", newSignature.id);
-        }
-
-        setShowSignatureModal(false);
-        setEditingSignatureId(null);
-        setToastMessage(
-          editingSignatureId
-            ? "Signature updated successfully"
-            : "Signature saved successfully"
-        );
-        setShowToast(true);
-      }
-    } catch (error) {
-      setToastMessage("Error saving signature. Please try again.");
-      setShowToast(true);
-    }
-  };
-
-  const handleClearSignature = () => {
-    signatureRef.current?.clear();
-  };
-
-  const handleDeleteSignature = (signatureId: string) => {
-    const updatedSignatures = savedSignatures.filter(
-      (sig) => sig.id !== signatureId
-    );
-    setSavedSignatures(updatedSignatures);
-    localStorage.setItem("userSignatures", JSON.stringify(updatedSignatures));
-
-    // If deleted signature was selected, select first available or none
-    if (selectedSignatureId === signatureId) {
-      const newSelectedId =
-        updatedSignatures.length > 0 ? updatedSignatures[0].id : null;
-      setSelectedSignatureId(newSelectedId);
-      if (newSelectedId) {
-        localStorage.setItem("selectedSignatureId", newSelectedId);
-      } else {
-        localStorage.removeItem("selectedSignatureId");
-      }
-    }
-
-    setToastMessage("Signature deleted successfully");
+  const handleCurrencyChange = (newCurrency: string) => {
+    setCurrency(newCurrency);
+    setDefaultCurrency(newCurrency);
+    setToastMessage("Currency updated");
     setShowToast(true);
   };
 
-  const handleSelectSignature = (signatureId: string | null) => {
-    setSelectedSignatureId(signatureId);
-    if (signatureId) {
-      localStorage.setItem("selectedSignatureId", signatureId);
+  const getPreviewText = () => {
+    const date = new Date();
+    const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+    const timestamp = Math.floor(date.getTime() / 1000);
+
+    switch (invoiceFormat) {
+      case "invoice-date-timestamp":
+        return `INV-${dateStr}-${timestamp}`;
+      case "unique-id":
+        return `INV-${crypto.randomUUID?.()?.slice(0, 8) || 'a1b2c3d4'}`;
+      case "sequential":
+        return `INV-${String(parseInt(startingNumber) || 1).padStart(5, '0')}`;
+      default:
+        return `INV-${dateStr}-${timestamp}`;
+    }
+  };
+
+  // Signature handlers
+  const handleSaveSignature = () => {
+    if (signatureRef.current && !signatureRef.current.isEmpty()) {
+      const newSignature: SavedItem = {
+        id: Date.now().toString(),
+        data: signatureRef.current.toDataURL(),
+        name: `Signature ${savedSignatures.length + 1}`,
+      };
+      const updated = [...savedSignatures, newSignature];
+      setSavedSignatures(updated);
+      localStorage.setItem("userSignatures", JSON.stringify(updated));
+      if (updated.length === 1) {
+        setSelectedSignatureId(newSignature.id);
+        localStorage.setItem("selectedSignatureId", newSignature.id);
+      }
+      setShowSignatureModal(false);
+      setToastMessage("Signature saved");
+      setShowToast(true);
+    }
+  };
+
+  const handleSelectSignature = (id: string | null) => {
+    setSelectedSignatureId(id);
+    if (id) {
+      localStorage.setItem("selectedSignatureId", id);
     } else {
       localStorage.removeItem("selectedSignatureId");
     }
   };
 
-  const handleEditSignature = (signatureId: string) => {
-    setEditingSignatureId(signatureId);
-    setShowSignatureModal(true);
-  };
-
-  const handleAddSignature = () => {
-    if (savedSignatures.length >= 3) {
-      setToastMessage(
-        "Maximum 3 signatures can be stored. Please delete an existing signature to add a new one."
-      );
-      setShowToast(true);
-      return;
+  const handleDeleteSignature = (id: string) => {
+    const updated = savedSignatures.filter(s => s.id !== id);
+    setSavedSignatures(updated);
+    localStorage.setItem("userSignatures", JSON.stringify(updated));
+    if (selectedSignatureId === id) {
+      const newId = updated.length > 0 ? updated[0].id : null;
+      setSelectedSignatureId(newId);
+      if (newId) localStorage.setItem("selectedSignatureId", newId);
+      else localStorage.removeItem("selectedSignatureId");
     }
-    setEditingSignatureId(null);
-    setShowSignatureModal(true);
-  };
-
-  const handleCloseSignatureModal = () => {
-    setShowSignatureModal(false);
-    setEditingSignatureId(null);
-    // Reset pen settings to defaults when closing
-    setPenColor("#000000");
-    setPenWidth(2);
-  };
-
-  // Upload signature functions
-  const handleUploadSignature = () => {
-    if (savedSignatures.length >= 3) {
-      setToastMessage(
-        "Maximum 3 signatures can be stored. Please delete an existing signature to add a new one."
-      );
-      setShowToast(true);
-      return;
-    }
-    setShowUploadSignatureModal(true);
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    const allowedTypes = [
-      "image/png",
-      "image/jpeg",
-      "image/jpg",
-      "image/gif",
-      "image/webp",
-      "image/svg+xml",
-    ];
-    if (!allowedTypes.includes(file.type)) {
-      setToastMessage(
-        "Invalid file type. Only PNG, JPG, JPEG, GIF, WebP, and SVG files are allowed."
-      );
-      setShowToast(true);
-      return;
-    }
-
-    // Validate file size (50KB = 50 * 1024 bytes)
-    const maxSize = 50 * 1024; // 50KB
-    if (file.size > maxSize) {
-      setToastMessage(
-        `File size too large. Maximum size allowed is ${Math.round(
-          maxSize / 1024
-        )}KB. Your file is ${Math.round(file.size / 1024)}KB.`
-      );
-      setShowToast(true);
-      return;
-    }
-
-    setSelectedSignatureFile(file);
-
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      if (result) {
-        // For SVG files, create a data URL
-        if (file.type === "image/svg+xml") {
-          setUploadPreview(result);
-        } else {
-          setUploadPreview(result);
-        }
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const validateImageDimensions = (file: File): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const { width, height } = img;
-
-        // Validate dimensions - reasonable signature size
-        const minWidth = 50,
-          maxWidth = 800;
-        const minHeight = 30,
-          maxHeight = 400;
-        const maxAspectRatio = 10; // width/height shouldn't exceed 10:1
-        const minAspectRatio = 0.1; // height/width shouldn't exceed 10:1
-
-        const aspectRatio = width / height;
-
-        if (width < minWidth || width > maxWidth) {
-          setToastMessage(
-            `Image width must be between ${minWidth}px and ${maxWidth}px. Your image is ${width}px wide.`
-          );
-          setShowToast(true);
-          resolve(false);
-          return;
-        }
-
-        if (height < minHeight || height > maxHeight) {
-          setToastMessage(
-            `Image height must be between ${minHeight}px and ${maxHeight}px. Your image is ${height}px tall.`
-          );
-          setShowToast(true);
-          resolve(false);
-          return;
-        }
-
-        if (aspectRatio > maxAspectRatio || aspectRatio < minAspectRatio) {
-          setToastMessage(
-            `Image aspect ratio is not suitable for a signature. Please use an image with more balanced dimensions.`
-          );
-          setShowToast(true);
-          resolve(false);
-          return;
-        }
-
-        resolve(true);
-      };
-
-      img.onerror = () => {
-        setToastMessage("Unable to load image. Please try a different file.");
-        setShowToast(true);
-        resolve(false);
-      };
-
-      if (uploadPreview) {
-        img.src = uploadPreview;
-      }
-    });
-  };
-
-  const handleSaveUploadedSignature = async () => {
-    if (!selectedSignatureFile || !uploadPreview) {
-      setToastMessage("Please select a file first.");
-      setShowToast(true);
-      return;
-    }
-
-    // Validate image dimensions
-    const isValidDimensions = await validateImageDimensions(
-      selectedSignatureFile
-    );
-    if (!isValidDimensions) {
-      return;
-    }
-
-    try {
-      const newSignature = {
-        id: Date.now().toString(),
-        data: uploadPreview,
-        name: `Uploaded Signature ${Date.now()}`,
-      };
-
-      const updatedSignatures = [...savedSignatures, newSignature];
-      setSavedSignatures(updatedSignatures);
-      localStorage.setItem("userSignatures", JSON.stringify(updatedSignatures));
-
-      // Set as selected if it's the first one
-      if (updatedSignatures.length === 1) {
-        setSelectedSignatureId(newSignature.id);
-        localStorage.setItem("selectedSignatureId", newSignature.id);
-      }
-
-      setShowUploadSignatureModal(false);
-      setSelectedSignatureFile(null);
-      setUploadPreview(null);
-      setToastMessage("Signature uploaded successfully!");
-      setShowToast(true);
-    } catch (error) {
-      setToastMessage("Error saving signature. Please try again.");
-      setShowToast(true);
-    }
-  };
-
-  const handleCloseUploadModal = () => {
-    setShowUploadSignatureModal(false);
-    setSelectedSignatureFile(null);
-    setUploadPreview(null);
-  };
-
-  // Logo management functions
-  const handleSaveLogo = (logoData: string, logoName: string) => {
-    try {
-      const newLogo = {
-        id: Date.now().toString(),
-        data: logoData,
-        name: logoName,
-      };
-
-      const updatedLogos = [...savedLogos, newLogo];
-      setSavedLogos(updatedLogos);
-      localStorage.setItem("userLogos", JSON.stringify(updatedLogos));
-
-      // Set as selected if it's the first one
-      if (updatedLogos.length === 1) {
-        setSelectedLogoId(newLogo.id);
-        localStorage.setItem("selectedLogoId", newLogo.id);
-      }
-
-      setToastMessage("Logo saved successfully");
-      setShowToast(true);
-    } catch (error) {
-      setToastMessage("Error saving logo. Please try again.");
-      setShowToast(true);
-    }
-  };
-
-  const handleDeleteLogo = (logoId: string) => {
-    const updatedLogos = savedLogos.filter((logo) => logo.id !== logoId);
-    setSavedLogos(updatedLogos);
-    localStorage.setItem("userLogos", JSON.stringify(updatedLogos));
-
-    // If deleted logo was selected, select first available or none
-    if (selectedLogoId === logoId) {
-      const newSelectedId = updatedLogos.length > 0 ? updatedLogos[0].id : null;
-      setSelectedLogoId(newSelectedId);
-      if (newSelectedId) {
-        localStorage.setItem("selectedLogoId", newSelectedId);
-      } else {
-        localStorage.removeItem("selectedLogoId");
-      }
-    }
-
-    setToastMessage("Logo deleted successfully");
+    setToastMessage("Signature deleted");
     setShowToast(true);
   };
 
-  const handleSelectLogo = (logoId: string | null) => {
-    setSelectedLogoId(logoId);
-    if (logoId) {
-      localStorage.setItem("selectedLogoId", logoId);
+  // Logo handlers
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 100 * 1024) {
+      setToastMessage("Logo must be under 100KB");
+      setShowToast(true);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const newLogo: SavedItem = {
+        id: Date.now().toString(),
+        data: event.target?.result as string,
+        name: file.name.split('.')[0] || `Logo ${savedLogos.length + 1}`,
+      };
+      const updated = [...savedLogos, newLogo];
+      setSavedLogos(updated);
+      localStorage.setItem("userLogos", JSON.stringify(updated));
+      if (updated.length === 1) {
+        setSelectedLogoId(newLogo.id);
+        localStorage.setItem("selectedLogoId", newLogo.id);
+      }
+      setToastMessage("Logo uploaded");
+      setShowToast(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleSelectLogo = (id: string | null) => {
+    setSelectedLogoId(id);
+    if (id) {
+      localStorage.setItem("selectedLogoId", id);
     } else {
       localStorage.removeItem("selectedLogoId");
     }
   };
 
-  const handleAddLogo = () => {
-    if (savedLogos.length >= 3) {
-      setToastMessage(
-        "Maximum 3 logos can be stored. Please delete an existing logo to add a new one."
-      );
-      setShowToast(true);
-      return;
+  const handleDeleteLogo = (id: string) => {
+    const updated = savedLogos.filter(l => l.id !== id);
+    setSavedLogos(updated);
+    localStorage.setItem("userLogos", JSON.stringify(updated));
+    if (selectedLogoId === id) {
+      const newId = updated.length > 0 ? updated[0].id : null;
+      setSelectedLogoId(newId);
+      if (newId) localStorage.setItem("selectedLogoId", newId);
+      else localStorage.removeItem("selectedLogoId");
     }
-    setShowUploadLogoModal(true);
-  };
-
-  const handleLogoFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    const allowedTypes = [
-      "image/png",
-      "image/jpeg",
-      "image/jpg",
-      "image/gif",
-      "image/webp",
-      "image/svg+xml",
-    ];
-    if (!allowedTypes.includes(file.type)) {
-      setToastMessage(
-        "Invalid file type. Only PNG, JPG, JPEG, GIF, WebP, and SVG files are allowed."
-      );
-      setShowToast(true);
-      return;
-    }
-
-    // Validate file size (100KB)
-    const maxSize = 100 * 1024; // 100KB
-    if (file.size > maxSize) {
-      setToastMessage(
-        `File size too large. Maximum size allowed is ${Math.round(
-          maxSize / 1024
-        )}KB. Your file is ${Math.round(file.size / 1024)}KB.`
-      );
-      setShowToast(true);
-      return;
-    }
-
-    setSelectedLogoFile(file);
-
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      if (result) {
-        setLogoUploadPreview(result);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const validateLogoImageDimensions = (file: File): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const { width, height } = img;
-
-        // Validate dimensions for logos
-        const minWidth = 50,
-          maxWidth = 500;
-        const minHeight = 30,
-          maxHeight = 500;
-
-        if (width < minWidth || width > maxWidth) {
-          setToastMessage(
-            `Logo width must be between ${minWidth}px and ${maxWidth}px. Your image is ${width}px wide.`
-          );
-          setShowToast(true);
-          resolve(false);
-          return;
-        }
-
-        if (height < minHeight || height > maxHeight) {
-          setToastMessage(
-            `Logo height must be between ${minHeight}px and ${maxHeight}px. Your image is ${height}px tall.`
-          );
-          setShowToast(true);
-          resolve(false);
-          return;
-        }
-
-        resolve(true);
-      };
-
-      img.onerror = () => {
-        setToastMessage("Unable to load image. Please try a different file.");
-        setShowToast(true);
-        resolve(false);
-      };
-
-      if (logoUploadPreview) {
-        img.src = logoUploadPreview;
-      }
-    });
-  };
-
-  const handleSaveUploadedLogo = async () => {
-    if (!selectedLogoFile || !logoUploadPreview) {
-      setToastMessage("Please select a file first.");
-      setShowToast(true);
-      return;
-    }
-
-    // Validate image dimensions
-    const isValidDimensions = await validateLogoImageDimensions(
-      selectedLogoFile
-    );
-    if (!isValidDimensions) {
-      return;
-    }
-
-    try {
-      const logoName = selectedLogoFile.name.split(".")[0] || "Logo";
-      handleSaveLogo(logoUploadPreview, logoName);
-
-      setShowUploadLogoModal(false);
-      setSelectedLogoFile(null);
-      setLogoUploadPreview(null);
-    } catch (error) {
-      setToastMessage("Error saving logo. Please try again.");
-      setShowToast(true);
-    }
-  };
-
-  const handleCloseLogoUploadModal = () => {
-    setShowUploadLogoModal(false);
-    setSelectedLogoFile(null);
-    setLogoUploadPreview(null);
-  };
-
-  const handleNotificationPermission = async () => {
-    try {
-      // Push notifications disabled in local-only mode
-      setToastMessage("Push notifications are disabled in local-only mode");
-      setShowToast(true);
-      // const permission = await requestPermission();
-      // setNotificationPermission(permission);
-
-      // if (permission === "granted") {
-      //   await subscribe();
-      //   setToastMessage("Notifications enabled successfully!");
-      // } else {
-      //   setToastMessage("Notification permission denied");
-      // }
-      // setShowToast(true);
-    } catch (error) {
-      setToastMessage("Failed to enable notifications");
-      setShowToast(true);
-    }
-  };
-
-  const handleAutoSaveToggle = (enabled: boolean) => {
-    setGlobalAutoSaveEnabled(enabled);
-    setAutoSaveEnabled(enabled);
-    setToastMessage(`Auto-save ${enabled ? 'enabled' : 'disabled'} by default for new files`);
+    setToastMessage("Logo deleted");
     setShowToast(true);
   };
 
-  React.useEffect(() => {
-    // Push notifications disabled in local-only mode
-    // getPermissionState().then((state) => {
-    //   setNotificationPermission(state.permission);
-    // });
-  }, []);
-
   return (
-    <IonPage
-      className={isDarkMode ? "settings-page-dark" : "settings-page-light"}
-    >
-      <IonContent
-        fullscreen
-        className={
-          isDarkMode ? "settings-content-dark" : "settings-content-light"
-        }
-      >
-        <div className="settings-container">
-          <div
-            className={`signature-section ${isDarkMode ? "" : "light-mode"}`}
-          >
-            {/* Settings Card */}
-            <IonCard
-              className={
-                isDarkMode ? "settings-card-dark" : "settings-card-light"
-              }
-            >
-              <IonCardHeader
-                className={
-                  isDarkMode
-                    ? "settings-card-header-dark"
-                    : "settings-card-header-light"
-                }
-              >
-                <IonCardTitle
-                  className={
-                    isDarkMode
-                      ? "settings-card-title-dark"
-                      : "settings-card-title-light"
-                  }
-                >
-                  <IonIcon
-                    icon={settings}
-                    style={{ marginRight: "8px", fontSize: "1.5em" }}
-                  />
-                  Preferences
-                </IonCardTitle>
-              </IonCardHeader>
-              <IonCardContent>
-                <IonList>
-                  <IonItem>
-                    <IonIcon icon={flash} slot="start" />
-                    <IonLabel>
-                      <h3>Auto-save by Default</h3>
-                      <p>Enable auto-save for newly opened files</p>
-                    </IonLabel>
-                    <IonToggle
-                      slot="end"
-                      checked={globalAutoSaveEnabled}
-                      onIonChange={(e) => handleAutoSaveToggle(e.detail.checked)}
+    <IonPage className={isDarkMode ? "dark-theme" : ""}>
+      <IonContent fullscreen className="ion-padding">
+        <div className={`settings-container ${isDarkMode ? 'dark' : 'light'}`}>
+          {/* Invoice Number Section */}
+          <section className="settings-section">
+            <div className="settings-section-header">
+              <InvoiceIcon />
+              <h2>Invoice Number</h2>
+            </div>
+
+            <div className="settings-card">
+              <div className="settings-row">
+                <div className="settings-row-left">
+                  <div className="settings-icon"><AutoNumberIcon /></div>
+                  <div className="settings-row-content">
+                    <span className="settings-label">Auto Add Invoice Number</span>
+                    <span className="settings-sublabel">Automatically assign numbers to new invoices</span>
+                  </div>
+                </div>
+                <Toggle checked={autoAddInvoiceNumber} onChange={setAutoAddInvoiceNumber} />
+              </div>
+
+              <div className="settings-row">
+                <div className="settings-row-left">
+                  <div className="settings-icon"><FormatIcon /></div>
+                  <div className="settings-row-content">
+                    <span className="settings-label">Format</span>
+                  </div>
+                </div>
+                <Select
+                  value={invoiceFormat}
+                  onChange={setInvoiceFormat}
+                  options={[
+                    { value: "invoice-date-timestamp", label: "INV-DATE-TIMESTAMP" },
+                    { value: "unique-id", label: "Unique Identifier" },
+                    { value: "sequential", label: "Sequential Number" },
+                  ]}
+                />
+              </div>
+
+              {invoiceFormat === "sequential" && (
+                <>
+                  <div className="settings-row">
+                    <div className="settings-row-left">
+                      <div className="settings-icon"><NumberIcon /></div>
+                      <div className="settings-row-content">
+                        <span className="settings-label">Starting Number</span>
+                        <span className="settings-sublabel">First number for sequential format</span>
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      min="1"
+                      value={startingNumber}
+                      onChange={(e) => setStartingNumber(e.target.value)}
+                      className="settings-number-input"
                     />
-                  </IonItem>
-                </IonList>
-              </IonCardContent>
-            </IonCard>
-          </div>
+                  </div>
 
-          {/* PWA Status Card */}
-          <div className="signature-section" style={{ marginBottom: "20px" }}>
-            <IonCard
-              className={
-                isDarkMode ? "settings-card-dark" : "settings-card-light"
-              }
-            >
-              <IonCardHeader
-                className={
-                  isDarkMode
-                    ? "settings-card-header-dark"
-                    : "settings-card-header-light"
-                }
-              >
-                <IonCardTitle
-                  className={
-                    isDarkMode
-                      ? "settings-card-title-dark"
-                      : "settings-card-title-light"
-                  }
-                >
-                  <IonIcon
-                    icon={wifiOutline}
-                    style={{ marginRight: "8px", fontSize: "1.5em" }}
-                  />
-                  App Status
-                </IonCardTitle>
-              </IonCardHeader>
-              <IonCardContent>
-                <IonList>
-                  <IonItem>
-                    <IonIcon
-                      icon={isOnline ? wifiOutline : cloudOfflineOutline}
-                      slot="start"
-                      style={{
-                        color: isOnline ? "#28ba62" : "#f04141",
-                      }}
+                  <div className="settings-row">
+                    <div className="settings-row-left">
+                      <div className="settings-icon"><ResetIcon /></div>
+                      <div className="settings-row-content">
+                        <span className="settings-label">Number Reset</span>
+                      </div>
+                    </div>
+                    <Select
+                      value={resetFrequency}
+                      onChange={setResetFrequency}
+                      options={[
+                        { value: "never", label: "Never" },
+                        { value: "daily", label: "Daily" },
+                        { value: "monthly", label: "Monthly" },
+                        { value: "yearly", label: "Yearly" },
+                      ]}
                     />
-                    <IonLabel>
-                      <h3>Connection Status</h3>
-                      <p>{isOnline ? "Online" : "Offline"}</p>
-                    </IonLabel>
-                  </IonItem>
+                  </div>
+                </>
+              )}
 
-                  {isInstallable && !isInstalled && (
-                    <IonItem button onClick={installApp}>
-                      <IonIcon
-                        icon={downloadOutline}
-                        slot="start"
-                        style={{ color: "#3880ff" }}
-                      />
-                      <IonLabel>
-                        <h3>Install App</h3>
-                        <p>Install as a Progressive Web App</p>
-                      </IonLabel>
-                    </IonItem>
-                  )}
-
-                  {isInstalled && (
-                    <IonItem>
-                      <IonIcon
-                        icon={checkmark}
-                        slot="start"
-                        style={{ color: "#28ba62" }}
-                      />
-                      <IonLabel>
-                        <h3>App Installed</h3>
-                        <p>Running as installed PWA</p>
-                      </IonLabel>
-                    </IonItem>
-                  )}
-                </IonList>
-              </IonCardContent>
-            </IonCard>
-          </div>
-
-          {/* Service Manager Section */}
-          <div className="signature-section" style={{ marginBottom: "20px" }}>
-            <ServiceManager />
-          </div>
+              <div className="settings-preview">
+                <div className="settings-preview-icon"><PreviewIcon /></div>
+                <div className="settings-preview-content">
+                  <span className="settings-preview-label">Preview</span>
+                  <span className="settings-preview-value">{getPreviewText()}</span>
+                </div>
+              </div>
+            </div>
+          </section>
 
           {/* Signature Section */}
-          <div className="signature-section" style={{ marginBottom: "20px" }}>
-            <IonCard
-              className={isDarkMode ? "auth-card-dark" : "auth-card-light"}
-            >
-              <IonCardHeader
-                className={
-                  isDarkMode
-                    ? "settings-card-header-dark"
-                    : "settings-card-header-light"
-                }
-                style={{ marginBottom: "20px" }}
-              >
-                <IonCardTitle
-                  className={
-                    isDarkMode
-                      ? "settings-card-title-dark"
-                      : "settings-card-title-light"
-                  }
-                >
-                  <IonIcon
-                    icon={createOutline}
-                    style={{ marginRight: "8px", fontSize: "1.5em" }}
-                  />
-                  Manage Signatures
-                </IonCardTitle>
-              </IonCardHeader>
-              <IonCardContent>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
-                  {/* None option */}
-                  <div
-                    style={{
-                      width: "150px",
-                      height: "80px",
-                      border: `2px solid ${selectedSignatureId === null
-                        ? isDarkMode
-                          ? "#4c8dff"
-                          : "#3880ff"
-                        : isDarkMode
-                          ? "#555"
-                          : "#ddd"
-                        }`,
-                      borderRadius: "8px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                      backgroundColor:
-                        selectedSignatureId === null
-                          ? isDarkMode
-                            ? "#1a2332"
-                            : "#e3f2fd"
-                          : "transparent",
-                      position: "relative",
-                    }}
-                    onClick={() => handleSelectSignature(null)}
-                  >
-                    <span
-                      style={{
-                        color: isDarkMode ? "#8b949e" : "#656d76",
-                        fontSize: "0.9rem",
-                      }}
-                    >
-                      None
-                    </span>
-                    {selectedSignatureId === null && (
-                      <IonIcon
-                        icon={checkmark}
-                        style={{
-                          position: "absolute",
-                          top: "8px",
-                          right: "8px",
-                          color: isDarkMode ? "#4c8dff" : "#3880ff",
-                          fontSize: "1.2rem",
-                        }}
-                      />
-                    )}
-                  </div>
-
-                  {/* Saved signatures */}
-                  {savedSignatures.map((signature) => (
-                    <div
-                      key={signature.id}
-                      style={{
-                        width: "150px",
-                        height: "80px",
-                        border: `2px solid ${selectedSignatureId === signature.id
-                          ? isDarkMode
-                            ? "#4c8dff"
-                            : "#3880ff"
-                          : isDarkMode
-                            ? "#555"
-                            : "#ddd"
-                          }`,
-                        borderRadius: "8px",
-                        position: "relative",
-                        cursor: "pointer",
-                        backgroundColor:
-                          selectedSignatureId === signature.id
-                            ? isDarkMode
-                              ? "#1a2332"
-                              : "#e3f2fd"
-                            : "transparent",
-                        overflow: "hidden",
-                      }}
-                      onClick={() => handleSelectSignature(signature.id)}
-                    >
-                      <img
-                        src={signature.data}
-                        alt="Signature"
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "contain",
-                          padding: "4px",
-                          backgroundColor: "white",
-                        }}
-                      />
-
-                      {/* Selection checkmark */}
-                      {selectedSignatureId === signature.id && (
-                        <IonIcon
-                          icon={checkmark}
-                          style={{
-                            position: "absolute",
-                            top: "8px",
-                            right: "8px",
-                            color: isDarkMode ? "#4c8dff" : "#3880ff",
-                            fontSize: "1.2rem",
-                            backgroundColor: "white",
-                            borderRadius: "50%",
-                            padding: "2px",
-                          }}
-                        />
-                      )}
-
-                      {/* Action buttons */}
-                      <div
-                        style={{
-                          position: "absolute",
-                          bottom: "4px",
-                          right: "4px",
-                          display: "flex",
-                          gap: "2px",
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <IonButton
-                          fill="clear"
-                          size="small"
-                          onClick={() => handleEditSignature(signature.id)}
-                          style={{
-                            "--color": "#3880ff",
-                            "--padding-start": "4px",
-                            "--padding-end": "4px",
-                            height: "24px",
-                            minHeight: "24px",
-                          }}
-                        >
-                          <IonIcon
-                            icon={pencil}
-                            style={{ fontSize: "0.9rem" }}
-                          />
-                        </IonButton>
-                        <IonButton
-                          fill="clear"
-                          size="small"
-                          onClick={() => handleDeleteSignature(signature.id)}
-                          style={{
-                            "--color": "#eb445a",
-                            "--padding-start": "4px",
-                            "--padding-end": "4px",
-                            height: "24px",
-                            minHeight: "24px",
-                          }}
-                        >
-                          <IonIcon
-                            icon={trash}
-                            style={{ fontSize: "0.9rem" }}
-                          />
-                        </IonButton>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {savedSignatures.length === 0 && (
-                  <p
-                    style={{
-                      textAlign: "center",
-                      marginTop: "20px",
-                      color: isDarkMode ? "#8b949e" : "#656d76",
-                    }}
-                  >
-                    No signatures created yet. Click "Add" to create or "Upload"
-                    to upload your first signature.
-                  </p>
-                )}
-
-                {/* Action buttons at bottom */}
-                <div
-                  style={{
-                    marginTop: "16px",
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    gap: "8px",
-                  }}
-                >
-                  <IonButton
-                    fill="outline"
-                    size="small"
-                    onClick={handleUploadSignature}
-                    style={{
-                      "--border-radius": "20px",
-                      minWidth: "80px",
-                    }}
-                  >
-                    <IonIcon icon={cloudUploadOutline} slot="start" />
-                    Upload
-                  </IonButton>
-                  <IonButton
-                    fill="outline"
-                    size="small"
-                    onClick={handleAddSignature}
-                    style={{
-                      "--border-radius": "20px",
-                      minWidth: "80px",
-                    }}
-                  >
-                    <IonIcon icon={add} slot="start" />
-                    Add
-                  </IonButton>
-                </div>
-              </IonCardContent>
-            </IonCard>
-          </div>
-
-          {/* Logo Section */}
-          <div className="logo-section" style={{ marginBottom: "20px" }}>
-            <IonCard
-              className={isDarkMode ? "auth-card-dark" : "auth-card-light"}
-            >
-              <IonCardHeader
-                className={
-                  isDarkMode
-                    ? "settings-card-header-dark"
-                    : "settings-card-header-light"
-                }
-                style={{ marginBottom: "20px" }}
-              >
-                <IonCardTitle
-                  className={
-                    isDarkMode
-                      ? "settings-card-title-dark"
-                      : "settings-card-title-light"
-                  }
-                >
-                  <IonIcon
-                    icon={imageOutline}
-                    style={{ marginRight: "8px", fontSize: "1.5em" }}
-                  />
-                  Manage Logos
-                </IonCardTitle>
-              </IonCardHeader>
-              <IonCardContent>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
-                  {/* None option */}
-                  <div
-                    style={{
-                      width: "150px",
-                      height: "80px",
-                      border: `2px solid ${selectedLogoId === null
-                        ? isDarkMode
-                          ? "#4c8dff"
-                          : "#3880ff"
-                        : isDarkMode
-                          ? "#555"
-                          : "#ddd"
-                        }`,
-                      borderRadius: "8px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                      backgroundColor:
-                        selectedLogoId === null
-                          ? isDarkMode
-                            ? "#1a2332"
-                            : "#e3f2fd"
-                          : "transparent",
-                      position: "relative",
-                    }}
-                    onClick={() => handleSelectLogo(null)}
-                  >
-                    <span
-                      style={{
-                        color: isDarkMode ? "#8b949e" : "#656d76",
-                        fontSize: "0.9rem",
-                      }}
-                    >
-                      None
-                    </span>
-                    {selectedLogoId === null && (
-                      <IonIcon
-                        icon={checkmark}
-                        style={{
-                          position: "absolute",
-                          top: "8px",
-                          right: "8px",
-                          color: isDarkMode ? "#4c8dff" : "#3880ff",
-                          fontSize: "1.2rem",
-                        }}
-                      />
-                    )}
-                  </div>
-
-                  {/* Saved logos */}
-                  {savedLogos.map((logo) => (
-                    <div
-                      key={logo.id}
-                      style={{
-                        width: "150px",
-                        height: "80px",
-                        border: `2px solid ${selectedLogoId === logo.id
-                          ? isDarkMode
-                            ? "#4c8dff"
-                            : "#3880ff"
-                          : isDarkMode
-                            ? "#555"
-                            : "#ddd"
-                          }`,
-                        borderRadius: "8px",
-                        position: "relative",
-                        cursor: "pointer",
-                        backgroundColor:
-                          selectedLogoId === logo.id
-                            ? isDarkMode
-                              ? "#1a2332"
-                              : "#e3f2fd"
-                            : "transparent",
-                        overflow: "hidden",
-                      }}
-                      onClick={() => handleSelectLogo(logo.id)}
-                    >
-                      <img
-                        src={logo.data}
-                        alt="Logo"
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "contain",
-                          padding: "4px",
-                          backgroundColor: "white",
-                        }}
-                      />
-
-                      {/* Selection checkmark */}
-                      {selectedLogoId === logo.id && (
-                        <IonIcon
-                          icon={checkmark}
-                          style={{
-                            position: "absolute",
-                            top: "8px",
-                            right: "8px",
-                            color: isDarkMode ? "#4c8dff" : "#3880ff",
-                            fontSize: "1.2rem",
-                            backgroundColor: "white",
-                            borderRadius: "50%",
-                            padding: "2px",
-                          }}
-                        />
-                      )}
-
-                      {/* Action buttons */}
-                      <div
-                        style={{
-                          position: "absolute",
-                          bottom: "4px",
-                          right: "4px",
-                          display: "flex",
-                          gap: "2px",
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <IonButton
-                          fill="clear"
-                          size="small"
-                          onClick={() => handleDeleteLogo(logo.id)}
-                          style={{
-                            "--color": "#eb445a",
-                            "--padding-start": "4px",
-                            "--padding-end": "4px",
-                            height: "24px",
-                            minHeight: "24px",
-                          }}
-                        >
-                          <IonIcon
-                            icon={trash}
-                            style={{ fontSize: "0.9rem" }}
-                          />
-                        </IonButton>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {savedLogos.length === 0 && (
-                  <p
-                    style={{
-                      textAlign: "center",
-                      marginTop: "20px",
-                      color: isDarkMode ? "#8b949e" : "#656d76",
-                    }}
-                  >
-                    No logos uploaded yet. Click "Upload" to upload your first
-                    logo.
-                  </p>
-                )}
-
-                {/* Action buttons at bottom */}
-                <div
-                  style={{
-                    marginTop: "16px",
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    gap: "8px",
-                  }}
-                >
-                  <IonButton
-                    fill="outline"
-                    size="small"
-                    onClick={handleAddLogo}
-                    disabled={savedLogos.length >= 3}
-                    style={{
-                      "--border-radius": "20px",
-                      minWidth: "80px",
-                    }}
-                  >
-                    <IonIcon icon={cloudUploadOutline} slot="start" />
-                    {savedLogos.length >= 3 ? "Max Reached" : "Upload"}
-                  </IonButton>
-                </div>
-              </IonCardContent>
-            </IonCard>
-          </div>
-        </div>
-
-        {/* Menu Component (Action Sheet) */}
-        <Menu showM={showMenu} setM={() => setShowMenu(false)} />
-      </IonContent>
-
-      {/* Signature Modal */}
-      <IonModal
-        isOpen={showSignatureModal}
-        onDidDismiss={handleCloseSignatureModal}
-        className={isDarkMode ? "auth-modal-dark" : "auth-modal-light"}
-      >
-        <IonHeader>
-          <IonToolbar className="auth-modal-header">
-            <IonTitle className="auth-modal-title">
-              {/* Modal Title and Pen Settings */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  width: "100%",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "16px",
-                    color: "white",
-                    fontWeight: "600",
-                  }}
-                >
-                  {editingSignatureId ? "Edit Signature" : "Create Signature"}
-                </span>
-
-                {/* Pen Settings */}
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "20px" }}
-                >
-                  {/* Pen Color */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        color: "white",
-                        fontWeight: "500",
-                      }}
-                    >
-                      Color:
-                    </span>
-                    <div
-                      id="color-trigger"
-                      style={{
-                        width: "24px",
-                        height: "24px",
-                        borderRadius: "50%",
-                        backgroundColor: penColor,
-                        border: "2px solid white",
-                        boxShadow: "0 0 0 1px rgba(0,0,0,0.3)",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => setShowColorPicker(true)}
-                    />
-                  </div>
-
-                  {/* Pen Width */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      minWidth: "120px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        color: "white",
-                        fontWeight: "500",
-                      }}
-                    >
-                      Width:
-                    </span>
-                    <IonRange
-                      min={1}
-                      max={8}
-                      value={penWidth}
-                      onIonChange={(e) => setPenWidth(e.detail.value as number)}
-                      style={{
-                        flex: 1,
-                        "--bar-background": "rgba(255,255,255,0.3)",
-                        "--bar-background-active": "white",
-                        "--knob-background": "white",
-                        "--knob-size": "18px",
-                      }}
-                    />
-                    <span
-                      style={{
-                        fontSize: "12px",
-                        color: "white",
-                        minWidth: "24px",
-                        textAlign: "center",
-                      }}
-                    >
-                      {penWidth}px
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </IonTitle>
-            <IonButton
-              slot="end"
-              fill="clear"
-              color="light"
-              onClick={handleCloseSignatureModal}
-              style={{ fontSize: "20px", minWidth: "40px", minHeight: "40px" }}
-            >
-              ✕
-            </IonButton>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent className="auth-modal-content">
-          <div style={{ padding: "24px" }}>
-            {/* Signature Canvas */}
-            <div style={{ marginBottom: "20px" }}>
-              <div
-                style={{
-                  border: "2px dashed #ccc",
-                  borderRadius: "8px",
-                  padding: "16px",
-                  backgroundColor: "white",
-                  textAlign: "center",
-                }}
-              >
-                <div
-                  style={{
-                    width: "100%",
-                    maxWidth: "500px",
-                    margin: "0 auto",
-                    position: "relative",
-                  }}
-                >
-                  <SignatureCanvas
-                    ref={signatureRef}
-                    canvasProps={{
-                      width: 500,
-                      height: 200,
-                      className: "signature-canvas",
-                      style: {
-                        width: "100%",
-                        height: "200px",
-                        border: "1px solid #ddd",
-                        borderRadius: "4px",
-                        touchAction: "none",
-                        display: "block",
-                      },
-                    }}
-                    penColor={penColor}
-                    minWidth={penWidth * 0.5}
-                    maxWidth={penWidth}
-                    backgroundColor="rgb(255, 255, 255)"
-                    dotSize={penWidth * 0.5}
-                    throttle={16}
-                    velocityFilterWeight={0.7}
-                  />
-                </div>
-                <p
-                  style={{
-                    fontSize: "0.9em",
-                    color: "#666",
-                    marginTop: "8px",
-                    marginBottom: "0",
-                  }}
-                >
-                  Sign above with your finger or stylus
-                </p>
-              </div>
+          <section className="settings-section">
+            <div className="settings-section-header">
+              <SignatureIcon />
+              <h2>Signatures</h2>
             </div>
 
-            {/* Action Buttons */}
-            <IonGrid>
-              <IonRow>
-                <IonCol size="12" sizeMd="4">
-                  <IonButton
-                    expand="block"
-                    fill="outline"
-                    onClick={handleClearSignature}
-                  >
-                    Clear
-                  </IonButton>
-                </IonCol>
-                <IonCol size="12" sizeMd="8">
-                  <IonButton
-                    expand="block"
-                    onClick={handleSaveSignature}
-                    className="auth-submit-button"
-                    color="primary"
-                  >
-                    <IonIcon icon={saveOutline} slot="start" />
-                    {editingSignatureId ? "Update Signature" : "Save Signature"}
-                  </IonButton>
-                </IonCol>
-              </IonRow>
-            </IonGrid>
-          </div>
-        </IonContent>
-      </IonModal>
-
-      {/* Upload Signature Modal */}
-      <IonModal
-        isOpen={showUploadSignatureModal}
-        onDidDismiss={handleCloseUploadModal}
-        className={isDarkMode ? "auth-modal-dark" : "auth-modal-light"}
-      >
-        <IonHeader>
-          <IonToolbar className="auth-modal-header">
-            <IonTitle className="auth-modal-title">
-              <IonIcon
-                icon={cloudUploadOutline}
-                style={{ marginRight: "8px" }}
-              />
-              Upload Signature
-            </IonTitle>
-            <IonButton
-              slot="end"
-              fill="clear"
-              color="light"
-              onClick={handleCloseUploadModal}
-              style={{ fontSize: "20px", minWidth: "40px", minHeight: "40px" }}
-            >
-              ✕
-            </IonButton>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent className="auth-modal-content">
-          <div style={{ padding: "24px" }}>
-            {/* File Upload Section */}
-            <div style={{ marginBottom: "20px" }}>
-              <div
-                style={{
-                  border: "2px dashed #ccc",
-                  borderRadius: "8px",
-                  padding: "20px",
-                  textAlign: "center",
-                  backgroundColor: isDarkMode ? "#1a1a1a" : "#f9f9f9",
-                }}
-              >
-                <IonIcon
-                  icon={imageOutline}
-                  style={{
-                    fontSize: "48px",
-                    color: "#ccc",
-                    marginBottom: "16px",
-                  }}
-                />
-                <h3
-                  style={{
-                    margin: "0 0 8px 0",
-                    color: isDarkMode ? "#fff" : "#000",
-                  }}
-                >
-                  Select Signature File
-                </h3>
-                <p
-                  style={{
-                    margin: "0 0 16px 0",
-                    color: isDarkMode ? "#8b949e" : "#656d76",
-                  }}
-                >
-                  Upload PNG, JPG, GIF, WebP, or SVG files (max 50KB)
-                </p>
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  style={{ display: "none" }}
-                  id="signature-file-input"
-                />
-
-                <IonButton
-                  fill="outline"
-                  onClick={() =>
-                    document.getElementById("signature-file-input")?.click()
-                  }
-                >
-                  <IonIcon icon={imageOutline} slot="start" />
-                  Choose File
-                </IonButton>
-              </div>
-
-              {/* Requirements */}
-              <div
-                style={{
-                  marginTop: "16px",
-                  padding: "12px",
-                  backgroundColor: isDarkMode ? "#1a1a1a" : "#f0f8ff",
-                  borderRadius: "6px",
-                  border: `1px solid ${isDarkMode ? "#333" : "#e0e8f0"}`,
-                }}
-              >
-                <h4
-                  style={{
-                    margin: "0 0 8px 0",
-                    fontSize: "14px",
-                    color: isDarkMode ? "#fff" : "#000",
-                  }}
-                >
-                  Requirements:
-                </h4>
-                <ul
-                  style={{
-                    margin: "0",
-                    paddingLeft: "16px",
-                    fontSize: "12px",
-                    color: isDarkMode ? "#8b949e" : "#656d76",
-                  }}
-                >
-                  <li>File size: Maximum 50KB</li>
-                  <li>Formats: PNG, JPG, JPEG, GIF, WebP, SVG</li>
-                  <li>Dimensions: 50-800px width, 30-400px height</li>
-                  <li>Reasonable aspect ratio for signature</li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Preview Section */}
-            {uploadPreview && selectedSignatureFile && (
-              <div style={{ marginBottom: "20px" }}>
-                <h4
-                  style={{
-                    margin: "0 0 12px 0",
-                    color: isDarkMode ? "#fff" : "#000",
-                  }}
-                >
-                  Preview:
-                </h4>
+            <div className="settings-card">
+              <div className="settings-media-grid">
+                {/* None option */}
                 <div
-                  style={{
-                    border: "1px solid #ddd",
-                    borderRadius: "8px",
-                    padding: "16px",
-                    backgroundColor: "white",
-                    textAlign: "center",
-                  }}
+                  className={`settings-media-item ${selectedSignatureId === null ? 'selected' : ''}`}
+                  onClick={() => handleSelectSignature(null)}
                 >
-                  <img
-                    src={uploadPreview}
-                    alt="Signature preview"
-                    style={{
-                      maxWidth: "100%",
-                      maxHeight: "120px",
-                      objectFit: "contain",
-                    }}
-                  />
-                  <p
-                    style={{
-                      margin: "8px 0 0 0",
-                      fontSize: "12px",
-                      color: "#666",
-                    }}
-                  >
-                    File: {selectedSignatureFile.name} (
-                    {Math.round(selectedSignatureFile.size / 1024)}KB)
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <IonGrid>
-              <IonRow>
-                <IonCol size="12" sizeMd="6">
-                  <IonButton
-                    expand="block"
-                    fill="outline"
-                    onClick={handleCloseUploadModal}
-                  >
-                    Cancel
-                  </IonButton>
-                </IonCol>
-                <IonCol size="12" sizeMd="6">
-                  <IonButton
-                    expand="block"
-                    onClick={handleSaveUploadedSignature}
-                    disabled={!selectedSignatureFile || !uploadPreview}
-                    className="auth-submit-button"
-                    color="primary"
-                  >
-                    <IonIcon icon={saveOutline} slot="start" />
-                    Save Signature
-                  </IonButton>
-                </IonCol>
-              </IonRow>
-            </IonGrid>
-          </div>
-        </IonContent>
-      </IonModal>
-
-      {/* Upload Logo Modal */}
-      <IonModal
-        isOpen={showUploadLogoModal}
-        onDidDismiss={handleCloseLogoUploadModal}
-        className={isDarkMode ? "auth-modal-dark" : "auth-modal-light"}
-      >
-        <IonHeader>
-          <IonToolbar className="auth-modal-header">
-            <IonTitle className="auth-modal-title">
-              <IonIcon
-                icon={cloudUploadOutline}
-                style={{ marginRight: "8px" }}
-              />
-              Upload Logo
-            </IonTitle>
-            <IonButton
-              slot="end"
-              fill="clear"
-              color="light"
-              onClick={handleCloseLogoUploadModal}
-              style={{ fontSize: "20px", minWidth: "40px", minHeight: "40px" }}
-            >
-              ✕
-            </IonButton>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent className="auth-modal-content">
-          <div style={{ padding: "24px" }}>
-            {/* File Upload Section */}
-            <div style={{ marginBottom: "20px" }}>
-              <div
-                style={{
-                  border: "2px dashed #ccc",
-                  borderRadius: "8px",
-                  padding: "20px",
-                  textAlign: "center",
-                  backgroundColor: isDarkMode ? "#1a1a1a" : "#f9f9f9",
-                }}
-              >
-                <IonIcon
-                  icon={imageOutline}
-                  style={{
-                    fontSize: "48px",
-                    color: "#ccc",
-                    marginBottom: "16px",
-                  }}
-                />
-                <h3
-                  style={{
-                    margin: "0 0 8px 0",
-                    color: isDarkMode ? "#fff" : "#000",
-                  }}
-                >
-                  Upload Logo Image
-                </h3>
-                <p
-                  style={{
-                    margin: "0 0 16px 0",
-                    color: isDarkMode ? "#8b949e" : "#656d76",
-                    fontSize: "14px",
-                  }}
-                >
-                  Select an image file for your logo
-                </p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoFileSelect}
-                  style={{ display: "none" }}
-                  id="logo-upload-input"
-                />
-                <IonButton
-                  fill="outline"
-                  onClick={() =>
-                    document.getElementById("logo-upload-input")?.click()
-                  }
-                >
-                  <IonIcon icon={cloudUploadOutline} slot="start" />
-                  Choose File
-                </IonButton>
-              </div>
-
-              {/* Requirements */}
-              <div style={{ marginTop: "16px" }}>
-                <h4
-                  style={{
-                    margin: "0 0 8px 0",
-                    fontSize: "14px",
-                    color: isDarkMode ? "#fff" : "#000",
-                  }}
-                >
-                  Requirements:
-                </h4>
-                <ul
-                  style={{
-                    margin: "0",
-                    paddingLeft: "16px",
-                    fontSize: "12px",
-                    color: isDarkMode ? "#8b949e" : "#656d76",
-                  }}
-                >
-                  <li>File size: Maximum 100KB</li>
-                  <li>Formats: PNG, JPG, JPEG, GIF, WebP, SVG</li>
-                  <li>Dimensions: 50-500px width, 30-500px height</li>
-                  <li>Clear, professional logo image</li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Preview Section */}
-            {logoUploadPreview && selectedLogoFile && (
-              <div style={{ marginBottom: "20px" }}>
-                <h4
-                  style={{
-                    margin: "0 0 12px 0",
-                    fontSize: "16px",
-                    color: isDarkMode ? "#fff" : "#000",
-                  }}
-                >
-                  Preview
-                </h4>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "16px",
-                    padding: "16px",
-                    border: "1px solid #ddd",
-                    borderRadius: "8px",
-                    backgroundColor: isDarkMode ? "#2a2a2a" : "#f5f5f5",
-                  }}
-                >
-                  <img
-                    src={logoUploadPreview}
-                    alt="Logo preview"
-                    style={{
-                      maxWidth: "100px",
-                      maxHeight: "60px",
-                      objectFit: "contain",
-                      border: "1px solid #ddd",
-                      backgroundColor: "white",
-                      padding: "4px",
-                    }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <p
-                      style={{
-                        margin: "0",
-                        fontSize: "14px",
-                        color: isDarkMode ? "#fff" : "#000",
-                      }}
-                    >
-                      File: {selectedLogoFile.name} (
-                      {Math.round(selectedLogoFile.size / 1024)}KB)
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <IonGrid>
-              <IonRow>
-                <IonCol size="12" sizeMd="6">
-                  <IonButton
-                    expand="block"
-                    fill="outline"
-                    onClick={handleCloseLogoUploadModal}
-                  >
-                    Cancel
-                  </IonButton>
-                </IonCol>
-                <IonCol size="12" sizeMd="6">
-                  <IonButton
-                    expand="block"
-                    onClick={handleSaveUploadedLogo}
-                    disabled={!selectedLogoFile || !logoUploadPreview}
-                    className="auth-submit-button"
-                    color="primary"
-                  >
-                    <IonIcon icon={saveOutline} slot="start" />
-                    Save Logo
-                  </IonButton>
-                </IonCol>
-              </IonRow>
-            </IonGrid>
-          </div>
-        </IonContent>
-      </IonModal>
-
-      {/* Color Picker Popover */}
-      <IonPopover
-        trigger="color-trigger"
-        isOpen={showColorPicker}
-        onDidDismiss={() => setShowColorPicker(false)}
-        showBackdrop={true}
-      >
-        <IonContent className="ion-padding">
-          <div style={{ padding: "8px" }}>
-            <h4 style={{ margin: "0 0 12px 0", fontSize: "16px" }}>
-              Select Pen Color
-            </h4>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "12px",
-                width: "120px",
-              }}
-            >
-              {penColors.map((color, index) => (
-                <div
-                  key={index}
-                  style={{
-                    width: "32px",
-                    height: "32px",
-                    borderRadius: "50%",
-                    backgroundColor: color.value,
-                    border:
-                      penColor === color.value
-                        ? "3px solid #0969da"
-                        : "2px solid #ccc",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    position: "relative",
-                  }}
-                  onClick={() => {
-                    setPenColor(color.value);
-                    setShowColorPicker(false);
-                  }}
-                >
-                  {penColor === color.value && (
-                    <div
-                      style={{
-                        width: "8px",
-                        height: "8px",
-                        borderRadius: "50%",
-                        backgroundColor:
-                          color.value === "#000000" ? "white" : "#000000",
-                      }}
-                    />
+                  <span className="settings-media-none">None</span>
+                  {selectedSignatureId === null && (
+                    <div className="settings-media-check"><CheckIcon /></div>
                   )}
                 </div>
-              ))}
+
+                {savedSignatures.map(sig => (
+                  <div
+                    key={sig.id}
+                    className={`settings-media-item ${selectedSignatureId === sig.id ? 'selected' : ''}`}
+                    onClick={() => handleSelectSignature(sig.id)}
+                  >
+                    <img src={sig.data} alt="Signature" />
+                    {selectedSignatureId === sig.id && (
+                      <div className="settings-media-check"><CheckIcon /></div>
+                    )}
+                    <button
+                      className="settings-media-delete"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteSignature(sig.id); }}
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
+                ))}
+
+                {savedSignatures.length < 3 && (
+                  <button
+                    className="settings-media-add"
+                    onClick={() => setShowSignatureModal(true)}
+                  >
+                    <PlusIcon />
+                    <span>Add</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* Logo Section */}
+          <section className="settings-section">
+            <div className="settings-section-header">
+              <LogoIcon />
+              <h2>Logos</h2>
+            </div>
+
+            <div className="settings-card">
+              <div className="settings-media-grid">
+                {/* None option */}
+                <div
+                  className={`settings-media-item ${selectedLogoId === null ? 'selected' : ''}`}
+                  onClick={() => handleSelectLogo(null)}
+                >
+                  <span className="settings-media-none">None</span>
+                  {selectedLogoId === null && (
+                    <div className="settings-media-check"><CheckIcon /></div>
+                  )}
+                </div>
+
+                {savedLogos.map(logo => (
+                  <div
+                    key={logo.id}
+                    className={`settings-media-item ${selectedLogoId === logo.id ? 'selected' : ''}`}
+                    onClick={() => handleSelectLogo(logo.id)}
+                  >
+                    <img src={logo.data} alt="Logo" />
+                    {selectedLogoId === logo.id && (
+                      <div className="settings-media-check"><CheckIcon /></div>
+                    )}
+                    <button
+                      className="settings-media-delete"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteLogo(logo.id); }}
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
+                ))}
+
+                {savedLogos.length < 3 && (
+                  <button
+                    className="settings-media-add"
+                    onClick={() => logoInputRef.current?.click()}
+                  >
+                    <UploadIcon />
+                    <span>Upload</span>
+                  </button>
+                )}
+              </div>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleLogoUpload}
+              />
+            </div>
+          </section>
+
+          {/* General Settings Section */}
+          <section className="settings-section">
+            <div className="settings-section-header">
+              <SettingsGearIcon />
+              <h2>General Settings</h2>
+            </div>
+
+            <div className="settings-card">
+              <div className="settings-row">
+                <div className="settings-row-left">
+                  <div className="settings-icon"><CurrencyIcon /></div>
+                  <div className="settings-row-content">
+                    <span className="settings-label">Default Currency</span>
+                  </div>
+                </div>
+                <Select
+                  value={currency}
+                  onChange={handleCurrencyChange}
+                  options={[
+                    { value: "USD", label: "USD ($)" },
+                    { value: "EUR", label: "EUR (€)" },
+                    { value: "GBP", label: "GBP (£)" },
+                    { value: "INR", label: "INR (₹)" },
+                    { value: "AUD", label: "AUD (A$)" },
+                    { value: "CAD", label: "CAD (C$)" },
+                    { value: "JPY", label: "JPY (¥)" },
+                  ]}
+                />
+              </div>
+            </div>
+          </section>
+        </div>
+
+        {/* Signature Modal */}
+        <IonModal isOpen={showSignatureModal} onDidDismiss={() => setShowSignatureModal(false)}>
+          <div className={`signature-modal ${isDarkMode ? 'dark' : 'light'}`}>
+            <div className="signature-modal-header">
+              <h3>Draw Signature</h3>
+              <button onClick={() => setShowSignatureModal(false)}>×</button>
+            </div>
+            <div className="signature-modal-content">
+              <div className="signature-canvas-wrapper">
+                <SignatureCanvas
+                  ref={signatureRef}
+                  penColor={penColor}
+                  canvasProps={{
+                    width: 400,
+                    height: 180,
+                    className: 'signature-canvas'
+                  }}
+                />
+              </div>
+              <div className="signature-colors">
+                {['#000000', '#0066CC', '#CC0000', '#00AA00'].map(color => (
+                  <button
+                    key={color}
+                    className={`signature-color ${penColor === color ? 'active' : ''}`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => setPenColor(color)}
+                  />
+                ))}
+              </div>
+              <div className="signature-actions">
+                <IonButton fill="outline" onClick={() => signatureRef.current?.clear()}>
+                  Clear
+                </IonButton>
+                <IonButton onClick={handleSaveSignature}>
+                  Save Signature
+                </IonButton>
+              </div>
             </div>
           </div>
-        </IonContent>
-      </IonPopover>
+        </IonModal>
 
-      {/* Toast for notifications */}
-      <IonToast
-        isOpen={showToast}
-        onDidDismiss={() => setShowToast(false)}
-        message={toastMessage}
-        duration={toastMessage.includes("Maximum") ? 4000 : 3000}
-        position="bottom"
-        color={
-          toastMessage.includes("successful")
-            ? "success"
-            : toastMessage.includes("Maximum")
-              ? "warning"
-              : "danger"
-        }
-      />
+        <IonToast
+          isOpen={showToast}
+          onDidDismiss={() => setShowToast(false)}
+          message={toastMessage}
+          duration={2000}
+          position="bottom"
+        />
+      </IonContent>
     </IonPage>
   );
 };
 
 export default SettingsPage;
+

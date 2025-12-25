@@ -40,7 +40,7 @@ import {
   closeCircleOutline,
   alertCircleOutline,
 } from "ionicons/icons";
-import { useHistory } from "react-router-dom";
+
 import { useTheme } from "../contexts/ThemeContext";
 import { markUserAsExisting } from "../utils/helper";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -48,7 +48,6 @@ import "./LandingPage.css";
 
 const LandingPage: React.FC = () => {
   const { isDarkMode } = useTheme();
-  const history = useHistory();
   const targetRef = useRef<HTMLDivElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const { scrollYProgress } = useScroll({
@@ -58,14 +57,6 @@ const LandingPage: React.FC = () => {
 
   const opacity = useTransform(scrollYProgress, [0, 0.5], [0, 1]);
   const scale = useTransform(scrollYProgress, [0, 0.5], [0.8, 1]);
-
-  const handleGetStarted = () => {
-    try {
-      history.push("/app/dashboard/home");
-    } catch (error) {
-      console.error("Error in handleGetStarted:", error);
-    }
-  };
 
   return (
     <IonPage className={`landing-page ${isDarkMode ? "dark" : ""}`}>
@@ -77,9 +68,9 @@ const LandingPage: React.FC = () => {
           </div>
           <div slot="end" className="desktop-nav ion-hide-sm-down">
             <IonButton fill="clear" color="dark">Solution</IonButton>
-            <IonButton fill="clear" color="dark">Pricing</IonButton>
+            <IonButton fill="clear" color="dark" href="/pricing">Pricing</IonButton>
             <IonButton fill="clear" color="dark">About Us</IonButton>
-            <IonButton onClick={handleGetStarted} color="primary" shape="round">
+            <IonButton href="/auth" color="primary" shape="round">
               Get Started
             </IonButton>
           </div>
@@ -112,13 +103,13 @@ const LandingPage: React.FC = () => {
                         size="large"
                         expand="block"
                         className="primary-cta"
-                        onClick={handleGetStarted}
+                        href="/auth"
                       >
                         Try Now
                         <IonIcon slot="end" icon={arrowForward} />
                       </IonButton>
                       <IonText color="medium" className="trial-text">
-                        <small>Try out the product without signing in</small>
+                        <small>Sign in to get started for free</small>
                       </IonText>
                     </div>
                   </motion.div>
@@ -309,10 +300,128 @@ const LandingPage: React.FC = () => {
           </IonGrid>
         </section >
 
-        {/* Detailed Feature: AI Editing */}
-        < section className="detail-section alt-bg" >
+        {/* Templates Collection Section */}
+        <section className="detail-section alt-bg">
           <IonGrid>
             <IonRow className="ion-align-items-center">
+              <IonCol size="12" sizeMd="6">
+                <div className="detail-content">
+                  <IonChip color="warning">Creative</IonChip>
+                  <h2>100s of Prebuilt Templates</h2>
+                  <p>
+                    Start with a professionally designed template and customize it with our Template Editor or AI Assistant.
+                    Unleash your creativity and create the perfect invoice for your brand.
+                  </p>
+                  <ul className="feature-list">
+                    <li><IonIcon icon={checkmarkCircle} color="success" /> Professional Designs</li>
+                    <li><IonIcon icon={checkmarkCircle} color="success" /> Fully Customizable</li>
+                    <li><IonIcon icon={checkmarkCircle} color="success" /> Faster AI Generation</li>
+                  </ul>
+                  <IonButton fill="outline" href="/auth">Explore Templates</IonButton>
+                </div>
+              </IonCol>
+              <IonCol size="12" sizeMd="6">
+                <div className="detail-image-placeholder" style={{
+                  position: 'relative',
+                  overflow: 'hidden',
+                  background: 'linear-gradient(135deg, #fefce8 0%, #fff7ed 100%)', // Warn/Orange tint
+                  perspective: '1000px'
+                }}>
+                  <div style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    top: '20px' // Slight offset to center the fan
+                  }}>
+                    {/* Invoice 1 */}
+                    <img
+                      src="/invoices/invoice-1.png"
+                      alt="Template 1"
+                      style={{
+                        position: 'absolute',
+                        width: '200px',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+                        transform: 'rotate(-15deg) translateX(-80px) translateY(20px)',
+                        zIndex: 1,
+                        border: '1px solid rgba(0,0,0,0.05)'
+                      }}
+                    />
+                    {/* Invoice 2 */}
+                    <img
+                      src="/invoices/invoice-2.png"
+                      alt="Template 2"
+                      style={{
+                        position: 'absolute',
+                        width: '200px',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+                        transform: 'rotate(-7deg) translateX(-40px) translateY(5px)',
+                        zIndex: 2,
+                        border: '1px solid rgba(0,0,0,0.05)'
+                      }}
+                    />
+                    {/* Invoice 3 */}
+                    <img
+                      src="/invoices/invoice-3.png"
+                      alt="Template 3"
+                      style={{
+                        position: 'absolute',
+                        width: '200px',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+                        transform: 'rotate(0deg) translateY(-10px)',
+                        zIndex: 3,
+                        border: '1px solid rgba(0,0,0,0.05)'
+                      }}
+                    />
+                    {/* Invoice 4 */}
+                    <img
+                      src="/invoices/invoice-4.png"
+                      alt="Template 4"
+                      style={{
+                        position: 'absolute',
+                        width: '200px',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+                        transform: 'rotate(7deg) translateX(40px) translateY(5px)',
+                        zIndex: 4,
+                        border: '1px solid rgba(0,0,0,0.05)'
+                      }}
+                    />
+                    {/* Invoice 5 */}
+                    <img
+                      src="/invoices/invoice-5.png"
+                      alt="Template 5"
+                      style={{
+                        position: 'absolute',
+                        width: '200px',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+                        transform: 'rotate(15deg) translateX(80px) translateY(20px)',
+                        zIndex: 5,
+                        border: '1px solid rgba(0,0,0,0.05)'
+                      }}
+                    />
+                  </div>
+                </div>
+              </IonCol>
+            </IonRow>
+          </IonGrid>
+        </section>
+
+        {/* Detailed Feature: AI Editing */}
+        <section className="detail-section">
+          <IonGrid>
+            <IonRow className="ion-align-items-center reverse-col">
+              <IonCol size="12" sizeMd="6">
+                <div className="detail-image-placeholder ai-theme" style={{ overflow: 'hidden', padding: 0 }}>
+                  <img src="/invoices/invoice-editing.png" alt="AI Invoice Editing" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                </div>
+              </IonCol>
               <IonCol size="12" sizeMd="6">
                 <div className="detail-content">
                   <IonChip color="primary">New</IonChip>
@@ -327,27 +436,17 @@ const LandingPage: React.FC = () => {
                     <li><IonIcon icon={checkmarkCircle} color="success" /> Smart Error Detection</li>
                     <li><IonIcon icon={checkmarkCircle} color="success" /> Instant Formatting Updates</li>
                   </ul>
-                  <IonButton fill="outline" onClick={handleGetStarted}>Try AI Editing</IonButton>
-                </div>
-              </IonCol>
-              <IonCol size="12" sizeMd="6">
-                <div className="detail-image-placeholder ai-theme">
-                  <IonIcon icon={createOutline} />
+                  <IonButton fill="outline" href="/auth">Try AI Editing</IonButton>
                 </div>
               </IonCol>
             </IonRow>
           </IonGrid>
-        </section >
+        </section>
 
         {/* Detailed Feature: Automated Workflows */}
-        < section className="detail-section" >
+        <section className="detail-section alt-bg">
           <IonGrid>
-            <IonRow className="ion-align-items-center reverse-col">
-              <IonCol size="12" sizeMd="6">
-                <div className="detail-image-placeholder workflow-theme">
-                  <IonIcon icon={timeOutline} />
-                </div>
-              </IonCol>
+            <IonRow className="ion-align-items-center">
               <IonCol size="12" sizeMd="6">
                 <div className="detail-content">
                   <h2>Automated Workflows</h2>
@@ -360,39 +459,17 @@ const LandingPage: React.FC = () => {
                     <li><IonIcon icon={checkmarkCircle} color="success" /> Auto-Payment Reminders</li>
                     <li><IonIcon icon={checkmarkCircle} color="success" /> Scheduled Reporting</li>
                   </ul>
-                  <IonButton fill="outline" onClick={handleGetStarted}>Automate Now</IonButton>
+                  <IonButton fill="outline" href="/auth">Automate Now</IonButton>
+                </div>
+              </IonCol>
+              <IonCol size="12" sizeMd="6">
+                <div className="detail-image-placeholder workflow-theme">
+                  <IonIcon icon={timeOutline} />
                 </div>
               </IonCol>
             </IonRow>
           </IonGrid>
-        </section >
-
-        {/* Global Focus Section */}
-        < section className="detail-section alt-bg" >
-          <IonGrid>
-            <IonRow className="ion-align-items-center">
-              <IonCol size="12" sizeMd="6">
-                <div className="detail-content">
-                  <h2>Built for Global Business</h2>
-                  <p>
-                    Whether you are in New York, London, or Tokyo, Invoice Calc adapts to your needs.
-                    Multi-currency support, customizable tax rules, and global invoice templates.
-                  </p>
-                  <ul className="feature-list">
-                    <li><IonIcon icon={checkmarkCircle} color="success" /> Multi-Currency Support</li>
-                    <li><IonIcon icon={checkmarkCircle} color="success" /> Global Tax Compliance</li>
-                    <li><IonIcon icon={checkmarkCircle} color="success" /> Multi-Language Invoices</li>
-                  </ul>
-                </div>
-              </IonCol>
-              <IonCol size="12" sizeMd="6">
-                <div className="detail-image-placeholder global-theme">
-                  <IonIcon icon={globeOutline} />
-                </div>
-              </IonCol>
-            </IonRow>
-          </IonGrid>
-        </section >
+        </section>
 
         {/* FAQ Section */}
         < section className="faq-section" >
@@ -455,7 +532,7 @@ const LandingPage: React.FC = () => {
                 <h5>Product</h5>
                 <ul>
                   <li>Features</li>
-                  <li>Pricing</li>
+                  <li><a href="/pricing" style={{ color: 'inherit', textDecoration: 'none' }}>Pricing</a></li>
                   <li>Templates</li>
                 </ul>
               </IonCol>

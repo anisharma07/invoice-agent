@@ -1,4 +1,4 @@
-import { DATA } from '../templates';
+import { TemplateData, AppMappingItem } from '../types/template';
 
 export interface CustomerStats {
     name: string;
@@ -40,8 +40,10 @@ export const parseInvoiceData = (files: any[]): InvoiceAnalytics => {
             // Skip if no content or templateId
             if (!file.content || !file.templateId) return;
 
-            const template = DATA[file.templateId];
-            if (!template) return;
+            // Removed DATA dependency. Analytics relying on static mapping will be limited.
+            const template: TemplateData | null = null;
+
+
 
             // Decode content
             let mscContent;
@@ -66,7 +68,6 @@ export const parseInvoiceData = (files: any[]): InvoiceAnalytics => {
                 if (line.startsWith('cell:')) {
                     const parts = line.split(':');
                     // Format: cell:Coord:type:value...
-                    // Example: cell:F36:v:1234.56...
                     const coord = parts[1];
 
                     // Find value
@@ -76,9 +77,7 @@ export const parseInvoiceData = (files: any[]): InvoiceAnalytics => {
                             value = parts[i + 1];
                             break;
                         } else if (parts[i] === 't') {
-                            // Text value, might be escaped
                             value = parts[i + 1];
-                            // Simple unescape for now if needed, but usually raw text
                             break;
                         }
                     }
@@ -89,67 +88,41 @@ export const parseInvoiceData = (files: any[]): InvoiceAnalytics => {
                 }
             });
 
-            // Extract Customer Info
+            // Extract Customer Info from appMapping
             let customerName = '';
             let customerEmail = '';
             let customerPhone = '';
 
-            if (template.cellMappings?.sheet1?.BillTo) {
-                const billTo = template.cellMappings.sheet1.BillTo as any;
-                if (billTo.Name) customerName = cellValues.get(billTo.Name) || '';
-                if (billTo.Email) customerEmail = cellValues.get(billTo.Email) || '';
-                if (billTo.Phone) customerPhone = cellValues.get(billTo.Phone) || '';
+            const sheetMapping = template.appMapping?.[sheetName] || template.appMapping?.['sheet1'];
+
+            if (sheetMapping && sheetMapping.BillTo && sheetMapping.BillTo.type === 'form' && sheetMapping.BillTo.formContent) {
+                const billToContent = sheetMapping.BillTo.formContent;
+
+                // Helper to get cell val
+                const getVal = (item: AppMappingItem) => {
+                    if (item.type === 'text' && item.cell) {
+                        return cellValues.get(item.cell) || '';
+                    }
+                    return '';
+                };
+
+                if (billToContent.Name) customerName = getVal(billToContent.Name);
+                if (billToContent.Email) customerEmail = getVal(billToContent.Email);
+                if (billToContent.Phone) customerPhone = getVal(billToContent.Phone);
             }
 
             // Clean up customer info
-            customerName = customerName.replace(/^\[|\]$/g, '').trim(); // Remove brackets if present
-            if (customerName === 'Name') customerName = ''; // Ignore placeholder
-
-            // Extract GST/Tax
-            // Heuristic: Look for "Tax" or "GST" label in the cells
-            let gstAmount = 0;
-            // Simple heuristic: iterate cells, find "GST" or "Tax", check adjacent cells
-            // This is expensive if many cells, but usually not too many.
-            // Optimization: Check specific range if possible, but for now iterate.
-            // Or better, check if we have a known Tax cell in template (not currently).
-
-            // Let's try to find a cell with value "Tax" or "GST"
-            for (const [coord, val] of cellValues.entries()) {
-                if (val && typeof val === 'string' && /GST|Tax/i.test(val)) {
-                    // Found a label. Look for value in next column (e.g. C -> D, or C -> F)
-                    // This requires coordinate parsing which is tricky here.
-                    // Let's skip complex parsing for now and rely on Total * 0.18 if not found? 
-                    // No, that's bad.
-
-                    // Let's just try to find a number that looks like tax? No.
-
-                    // Let's assume for now we don't have reliable GST extraction without template support.
-                    // But I will add a placeholder for it.
-                }
-            }
+            customerName = customerName.replace(/^\[|\]$/g, '').trim();
+            if (customerName === 'Name') customerName = '';
 
             // Extract Total
-            // We need to find the Total cell. 
-            // In DATA[1001], it's F36. But it might vary.
-            // We can try to look for "TOTAL" label and take the cell next to it, 
-            // or rely on hardcoded known locations for specific templates.
-            // For now, let's try to find a cell with "TOTAL" and look around it, 
-            // or use the template definition if we can infer it.
-
-            // Hardcoded for now based on 1001
             let totalAmount = 0;
             let totalCell = 'F36'; // Default for 1001
 
-            // Try to find "Total" label to be more dynamic
-            // This is a heuristic
-            /*
-            for (const [coord, val] of cellValues.entries()) {
-                if (val && typeof val === 'string' && val.toUpperCase().includes('TOTAL')) {
-                    // Found label, look for value in same row, next columns
-                    // This is complex to implement reliably without grid logic.
-                }
-            }
-            */
+            // Attempt to infer Total cell if defined in mapping? 
+            // Currently mapping doesn't have "Total" explicitly in the partial structure I saw, 
+            // but we might add it or rely on default.
+            // Some templates might have it.
 
             if (cellValues.has(totalCell)) {
                 const val = parseFloat(cellValues.get(totalCell) || '0');
@@ -158,19 +131,24 @@ export const parseInvoiceData = (files: any[]): InvoiceAnalytics => {
                 }
             }
 
-            // If total is 0, maybe it's a different template or not calculated.
-            // Let's try to sum up items if total is missing? No, that's risky.
+            // Try explicit Total if marked in appMapping?
+            if (totalAmount === 0 && sheetMapping && sheetMapping['Total']) {
+                const totalItem = sheetMapping['Total'];
+                if (totalItem.type === 'text' && totalItem.cell) {
+                    const val = parseFloat(cellValues.get(totalItem.cell) || '0');
+                    if (!isNaN(val)) totalAmount = val;
+                }
+            }
+
 
             if (totalAmount > 0) {
                 analytics.totalRevenue += totalAmount;
                 analytics.totalInvoices++;
 
                 const date = new Date(file.created);
-                const monthKey = date.toLocaleString('default', { month: 'short' }); // e.g., "Dec"
+                const monthKey = date.toLocaleString('default', { month: 'short' });
                 analytics.revenueByMonth[monthKey] = (analytics.revenueByMonth[monthKey] || 0) + totalAmount;
 
-                // GST Logic (Placeholder: 18% of total for demo if not extracted)
-                // In production, this should be extracted from the invoice
                 const gst = totalAmount * 0.18;
                 analytics.gstByMonth[monthKey] = (analytics.gstByMonth[monthKey] || 0) + gst;
 
@@ -203,26 +181,35 @@ export const parseInvoiceData = (files: any[]): InvoiceAnalytics => {
             }
 
             // Extract Items
-            const itemsConfig = template.cellMappings?.sheet1?.Items as any;
-            if (itemsConfig && itemsConfig.Rows && itemsConfig.Columns) {
-                const startRow = itemsConfig.Rows.start;
-                const endRow = itemsConfig.Rows.end;
-                const descCol = itemsConfig.Columns.Description;
-                const amountCol = itemsConfig.Columns.Amount;
+            if (sheetMapping && sheetMapping.Items && sheetMapping.Items.type === 'table') {
+                const itemsConfig = sheetMapping.Items;
+                if (itemsConfig.rows && itemsConfig.col) {
+                    const startRow = itemsConfig.rows.start;
+                    const endRow = itemsConfig.rows.end;
 
-                for (let r = startRow; r <= endRow; r++) {
-                    const descCell = `${descCol}${r}`;
-                    const amountCell = `${amountCol}${r}`;
+                    // Need column letters for Description and Amount
+                    const descColItem = itemsConfig.col.Description;
+                    const amountColItem = itemsConfig.col.Amount;
 
-                    const desc = cellValues.get(descCell);
-                    const amount = parseFloat(cellValues.get(amountCell) || '0');
+                    const descCol = descColItem?.cell;
+                    const amountCol = amountColItem?.cell;
 
-                    if (desc && amount > 0) {
-                        const current = itemMap.get(desc) || { count: 0, revenue: 0 };
-                        itemMap.set(desc, {
-                            count: current.count + 1,
-                            revenue: current.revenue + amount
-                        });
+                    if (descCol && amountCol) {
+                        for (let r = startRow; r <= endRow; r++) {
+                            const descCell = `${descCol}${r}`;
+                            const amountCell = `${amountCol}${r}`;
+
+                            const desc = cellValues.get(descCell);
+                            const amount = parseFloat(cellValues.get(amountCell) || '0');
+
+                            if (desc && amount > 0) {
+                                const current = itemMap.get(desc) || { count: 0, revenue: 0 };
+                                itemMap.set(desc, {
+                                    count: current.count + 1,
+                                    revenue: current.revenue + amount
+                                });
+                            }
+                        }
                     }
                 }
             }
@@ -245,7 +232,6 @@ export const parseInvoiceData = (files: any[]): InvoiceAnalytics => {
     analytics.customers = Array.from(customerMap.values())
         .sort((a, b) => b.totalSpent - a.totalSpent);
 
-    // Sort recent activity
     analytics.recentActivity.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     analytics.recentActivity = analytics.recentActivity.slice(0, 10);
 

@@ -225,3 +225,115 @@
         padding: 1rem 0;
     }
 }
+
+/* Stacked Social Login Buttons */
+.social-login-buttons-stacked {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.social-login-buttons-stacked .social-btn {
+    width: 100%;
+    position: relative;
+}
+
+.google-btn {
+    --border-color: #4285f4;
+}
+
+.google-btn:hover {
+    --background: rgba(66, 133, 244, 0.05);
+}
+
+.apple-btn {
+    --border-color: #000;
+}
+
+.apple-btn:disabled {
+    opacity: 0.6;
+}
+
+.coming-soon-badge {
+    position: absolute;
+    right: 12px;
+    font-size: 0.65rem;
+    background: var(--ion-color-warning);
+    color: #000;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Auth Loading Container */
+.auth-loading-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    gap: 1rem;
+}
+
+/* Auth Callback Styles */
+.auth-callback-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 2rem;
+}
+
+.auth-callback-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: center;
+}
+
+.auth-callback-loading ion-spinner {
+    width: 48px;
+    height: 48px;
+}
+
+.auth-callback-loading h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--ion-color-primary);
+}
+
+.auth-callback-loading p {
+    margin: 0;
+    color: var(--ion-color-medium);
+}
+
+.auth-callback-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: center;
+}
+
+.auth-callback-error h2 {
+    margin: 0;
+}
+
+.auth-retry-btn {
+    background: var(--ion-color-primary);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.auth-retry-btn:hover {
+    background: var(--ion-color-primary-shade);
+}

@@ -157,7 +157,7 @@ const InvoiceEditingAgent: React.FC<InvoiceEditingAgentProps> = ({
 
         try {
             // Extract current cell values
-            const cellMappings = activeTemplateData.cellMappings;
+            const cellMappings = activeTemplateData.appMapping;
             const currentValues = extractCellValues(cellMappings);
 
             // Prepare image if selected

@@ -3,7 +3,7 @@ import {
   loadScriptsSequentially,
   loadStylesheets,
   type ScriptConfig,
-} from '../../utils/socialcalc/scriptLoader';
+} from '../../components/socialcalc-editor/utils/scriptLoader';
 
 // SocialCalc scripts must be loaded in this exact order due to dependencies
 // This matches the original importcollabload.html load order from Flask app

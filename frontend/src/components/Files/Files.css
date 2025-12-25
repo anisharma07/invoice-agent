@@ -871,41 +871,43 @@ ion-icon[slot="end"] {
   }
 }
 
-/* File Card Styling */
+/* File Card Styling - Horizontal Rectangle Layout */
 .file-card {
   margin: 8px 0;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
   background: white;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .file-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
 .file-card-content {
-  padding: 16px;
+  padding: 12px 16px;
 }
 
 .file-card-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
 }
 
 .file-icon-wrapper {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
   border-radius: 10px;
-  background: rgba(var(--ion-color-primary-rgb), 0.1);
+  background: linear-gradient(135deg, rgba(var(--ion-color-primary-rgb), 0.15), rgba(var(--ion-color-primary-rgb), 0.08));
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .file-icon-card {
@@ -913,50 +915,141 @@ ion-icon[slot="end"] {
   color: var(--ion-color-primary);
 }
 
-.file-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.file-action-btn {
-  --padding-start: 4px;
-  --padding-end: 4px;
-  margin: 0;
-  height: 32px;
-}
-
 .file-info {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
 }
 
 .file-name {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--ion-text-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
+.file-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
+.file-invoice-id {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+}
+
+.file-total {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ion-color-success);
+}
 
 .file-date {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--ion-color-medium);
+}
+
+.file-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.file-action-btn {
+  --padding-start: 6px;
+  --padding-end: 6px;
+  margin: 0;
+  height: 36px;
+  width: 36px;
+}
+
+.file-action-btn ion-icon {
+  font-size: 18px;
+}
+
+/* Status chip styling */
+.file-status-chip {
+  height: 22px;
+  font-size: 11px;
+  margin: 0;
+  padding: 0 8px;
 }
 
 /* Dark Mode Support */
 .dark-theme .file-card {
   background: #1e1e1e;
-  border-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark-theme .file-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
 .dark-theme .file-icon-wrapper {
-  background: rgba(var(--ion-color-primary-rgb), 0.2);
+  background: linear-gradient(135deg, rgba(var(--ion-color-primary-rgb), 0.25), rgba(var(--ion-color-primary-rgb), 0.15));
+}
+
+/* Grid Container */
+.files-grid-container {
+  padding-bottom: 20px;
+}
+
+.date-group {
+  margin-bottom: 24px;
+}
+
+.date-header {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ion-color-primary);
+  margin: 0 0 12px 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dark-theme .date-header {
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .file-card-content {
+    padding: 10px 12px;
+  }
+
+  .file-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+
+  .file-icon-card {
+    font-size: 20px;
+  }
+
+  .file-card-header {
+    gap: 12px;
+  }
+
+  .file-name {
+    font-size: 0.9rem;
+  }
+
+  .file-action-btn {
+    height: 32px;
+    width: 32px;
+  }
 }
 
 /* Grid Container */

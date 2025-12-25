@@ -10,7 +10,8 @@ import "./InvoicesPage.css";
 
 const InvoicesPage: React.FC = () => {
   const { isDarkMode } = useTheme();
-  const { selectedFile, store, updateSelectedFile, updateBillType } = useInvoice();
+  const { selectedFile, updateSelectedFile, updateBillType } = useInvoice();
+  // const { store } = useInvoice(); // store no longer needed
 
   // Clear selected file when navigating to files page to prevent conflicts
   useEffect(() => {
@@ -21,7 +22,7 @@ const InvoicesPage: React.FC = () => {
     <IonPage className={isDarkMode ? "dark-theme" : ""}>
       <IonContent fullscreen>
         <Files
-          store={store}
+          // store={store}
           file={selectedFile}
           updateSelectedFile={updateSelectedFile}
           updateBillType={updateBillType}

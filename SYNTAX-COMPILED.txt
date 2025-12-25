@@ -1,0 +1,343 @@
+=== SOCIALCALC FORMAT SYNTAX - LLM QUICK REFERENCE ===
+
+## CORE STRUCTURE
+Format: linetype:param1:param2:param3:...
+Escaping: \n=newline, \c=colon, \\=backslash
+First line MUST be: version:1.5
+
+## LINE TYPES & DEPENDENCIES
+
+version:1.5                           [REQUIRED - always first line]
+cell:<coord>:<attrs>...               [references: font, color, border, layout, cellformat, valueformat]
+sheet:<attrs>...                      [references: font, color, layout, cellformat, valueformat]
+col:<col>:<attrs>...                  [standalone]
+row:<row>:<attrs>...                  [standalone]
+font:<num>:<spec>                     [definition - referenced by cell/sheet]
+color:<num>:<value>                   [definition - referenced by cell/sheet]
+border:<num>:<spec>                   [definition - referenced by cell]
+layout:<num>:<spec>                   [definition - referenced by cell/sheet]
+cellformat:<num>:<alignment>          [definition - referenced by cell/sheet]
+valueformat:<num>:<pattern>           [definition - referenced by cell/sheet]
+name:<name>:<desc>:<value>            [standalone]
+
+## CELL LINE - COMPLETE SYNTAX
+
+cell:<coord>:<value_attr>:<formatting_attrs>...
+
+COORDINATES: A1, B10, AA1, AB100 (column+row)
+
+VALUE ATTRIBUTES (choose one):
+  t:<text>                            Plain text
+  v:<number>                          Numeric value
+  vt:<type>:<value>                   Typed value
+  vtf:<type>:<value>:<formula>        Formula with result
+  vtc:<type>:<value>:<display>        Formatted constant
+  e:<error>                           Error value
+
+VALUE TYPES:
+  n=numeric, t=text, nd=numeric_date, nt=numeric_time
+  n$=currency, nl=logical, ne=error
+
+FORMATTING ATTRIBUTES:
+  f:<num>          Font reference → font:<num>
+  c:<num>          Text color → color:<num>
+  bg:<num>         Background color → color:<num>
+  b:<t>:<r>:<b>:<l> Borders (top,right,bottom,left) → border:<num> (0=none)
+  l:<num>          Layout/padding → layout:<num>
+  cf:<num>         Cell alignment → cellformat:<num>
+  tvf:<num>        Text value format → valueformat:<num>
+  ntvf:<num>       Number value format → valueformat:<num>
+  colspan:<num>    Merge columns (integer)
+  rowspan:<num>    Merge rows (integer)
+  cssc:<class>     CSS class name
+  csss:<style>     CSS inline style (escape colons with \c)
+  mod:<y/n>        Modifiable flag
+  comment:<text>   Cell comment
+
+## SHEET LINE
+
+sheet:c:<cols>:r:<rows>:w:<width>:h:<height>:font:<num>:color:<num>:bgcolor:<num>:layout:<num>:tf:<num>:ntf:<num>:ntvf:<num>:tvf:<num>:recalc:<on/off>
+
+Required: c:<num>, r:<num> (define sheet dimensions)
+All other attributes optional
+
+## COLUMN & ROW
+
+col:<letter>:w:<width>:hide:<yes/no>
+row:<number>:h:<height>:hide:<yes/no>
+
+Width/Height: <number>px, auto, <percent>%
+
+## FONT DEFINITION
+
+font:<num>:<style> <weight> <size> <family>
+
+Style: normal, italic, * (default)
+Weight: normal, bold, * (default)
+Size: 6pt-72pt, 8px-36px, small, medium, large, x-large, * (default)
+Family: font names or * (default)
+
+Examples:
+font:1:normal bold 14pt Arial,Helvetica,sans-serif
+font:2:italic normal 12pt 'Times New Roman',serif
+font:3:* bold * *
+font:4:* * 18pt *
+
+## COLOR DEFINITION
+
+color:<num>:rgb(<r>,<g>,<b>)
+color:<num>:#RRGGBB
+
+Examples:
+color:1:rgb(255,0,0)      Red
+color:2:rgb(0,255,0)      Green
+color:3:rgb(0,0,255)      Blue
+color:4:rgb(255,255,0)    Yellow
+color:5:rgb(0,0,0)        Black
+color:6:rgb(255,255,255)  White
+color:7:rgb(128,128,128)  Gray
+
+## BORDER DEFINITION
+
+border:<num>:<thickness> <style> <color>
+
+Thickness: 1px, 2px, 3px, etc.
+Style: solid, dashed, dotted, double
+Color: rgb(r,g,b) or #RRGGBB
+
+Examples:
+border:1:1px solid rgb(0,0,0)
+border:2:2px dashed rgb(255,0,0)
+border:3:1px dotted rgb(0,0,255)
+border:4:3px double rgb(0,0,0)
+
+## LAYOUT DEFINITION
+
+layout:<num>:padding:<top> <right> <bottom> <left>;vertical-align:<value>;
+
+Padding: <number>px or * (default)
+Vertical-align: top, middle, bottom, * (default)
+
+Examples:
+layout:1:padding:10px * * *;vertical-align:*;
+layout:2:padding:* * * *;vertical-align:top;
+layout:3:padding:20px 20px 20px 20px;vertical-align:middle;
+layout:4:padding:5px 10px 5px 10px;vertical-align:bottom;
+
+## CELLFORMAT DEFINITION (HORIZONTAL ALIGNMENT)
+
+cellformat:<num>:<alignment>
+
+Alignment: left, center, right
+
+Examples:
+cellformat:1:left
+cellformat:2:center
+cellformat:3:right
+
+## VALUEFORMAT DEFINITION
+
+valueformat:<num>:<pattern>
+
+NUMBER FORMATS:
+  #,##0              Integer with commas: 1,234
+  #,##0.00           Two decimals: 1,234.56
+  #,##0.0000         Four decimals: 1,234.5678
+  0                  Integer no commas: 1234
+  0.00%              Percentage: 75.00%
+
+CURRENCY FORMATS:
+  $#,##0             Dollar no decimals: $1,234
+  $#,##0.00          Dollar with decimals: $1,234.56
+  ($#,##0)           Negative in parens: ($1,234)
+
+DATE FORMATS:
+  m/d/yy             Short: 1/4/06
+  mm/dd/yyyy         Full: 01/04/2006
+  yyyy-mm-dd         ISO: 2006-01-04
+  d-mmm-yy           Month abbr: 4-Jan-06
+  dd-mmm-yyyy        Month full: 04-Jan-2006
+  mmmm d, yyyy       Long: January 4, 2006
+
+TIME FORMATS (escape colon with \c):
+  h\cmm              12-hour: 12:30
+  h\cmm AM/PM        With AM/PM: 12:30 PM
+  h\cmm\css          With seconds: 12:30:45
+  hh\cmm\css         Padded: 12:30:45
+
+TEXT FORMATS:
+  text-plain         Plain text
+  text-html          HTML content
+  text-wiki          Wiki markup
+  text-link          Hyperlink
+
+## NAME DEFINITION
+
+name:<NAME>:<description>:<value>
+
+NAME: uppercase identifier
+description: text (can be encoded)
+value: cell reference (B5), range (A1:B7), or formula (=SUM(A1:A10))
+
+## FORMULA SYNTAX
+
+CELL REFERENCES:
+  Single: A1, B5, AA10
+  Range: A1:B5, C1:C10
+  In formulas stored in cell lines: escape colon as \c (A1\cB5)
+
+OPERATORS:
+  + - * / ^          Arithmetic
+  &                  Concatenation
+  = <> < > <= >=     Comparison
+
+MATH FUNCTIONS:
+  ABS(n) SUM(range) AVERAGE(range) MIN(range) MAX(range)
+  ROUND(n,digits) SQRT(n) POWER(base,exp) PI()
+  SIN(angle) COS(angle) TAN(angle)
+  MOD(n,div) INT(n)
+
+TEXT FUNCTIONS:
+  UPPER(text) LOWER(text) PROPER(text) LEN(text)
+  LEFT(text,n) RIGHT(text,n) MID(text,start,len)
+  FIND(find,text) SUBSTITUTE(text,old,new)
+
+DATE/TIME FUNCTIONS:
+  TODAY() NOW()
+  DATE(y,m,d) YEAR(date) MONTH(date) DAY(date)
+  TIME(h,m,s) HOUR(time) MINUTE(time) SECOND(time)
+
+LOGICAL FUNCTIONS:
+  IF(test,true,false) AND(v1,v2,...) OR(v1,v2,...) NOT(val)
+  TRUE() FALSE()
+
+LOOKUP FUNCTIONS:
+  CHOOSE(idx,v1,v2,...) INDEX(range,row,col) MATCH(val,range,type)
+
+STATISTICAL FUNCTIONS:
+  COUNT(range) COUNTA(range) COUNTBLANK(range)
+  COUNTIF(range,criteria) SUMIF(range,criteria)
+  STDEV(range) VAR(range)
+
+FINANCIAL FUNCTIONS:
+  PMT(rate,nper,pv) PV(rate,nper,pmt) FV(rate,nper,pmt)
+  NPV(rate,val1,val2,...) IRR(values)
+
+## COMMON PATTERNS
+
+Basic text cell:
+cell:A1:t:Hello World
+
+Formatted text:
+cell:A1:t:Bold Red:f:1:c:1
+font:1:* bold * *
+color:1:rgb(255,0,0)
+
+Bordered cell:
+cell:A1:t:Box:b:1:1:1:1
+border:1:1px solid rgb(0,0,0)
+
+Aligned cell:
+cell:A1:t:Centered:cf:1
+cellformat:1:center
+
+Padded cell with vertical alignment:
+cell:A1:t:Top Padded:l:1
+layout:1:padding:10px * * *;vertical-align:top;
+
+Number with format:
+cell:A1:v:1234.56:ntvf:1
+valueformat:1:$#,##0.00
+
+Formula:
+cell:A1:v:10
+cell:A2:v:20
+cell:A3:vtf:n:30:SUM(A1\cA2)
+
+Date with format:
+cell:A1:vtf:nd:45951:TODAY():ntvf:1
+valueformat:1:dd-mmm-yyyy
+
+Merged cell:
+cell:A1:t:Spans 2x2:colspan:2:rowspan:2
+cell:B1:
+cell:A2:
+cell:B2:
+
+Complete formatted cell:
+cell:A1:t:Complex:f:1:c:2:bg:3:b:1:1:1:1:cf:2:l:1:colspan:2
+font:1:normal bold 14pt Arial
+color:2:rgb(255,0,0)
+color:3:rgb(255,255,200)
+border:1:2px solid rgb(0,0,0)
+layout:1:padding:10px * * *;vertical-align:middle;
+cellformat:2:center
+
+## ALIGNMENT SYSTEM
+
+HORIZONTAL (cellformat):
+  cellformat:1:left      Left align text
+  cellformat:2:center    Center align text
+  cellformat:3:right     Right align text
+
+VERTICAL (layout):
+  layout:1:padding:* * * *;vertical-align:top;      Top align
+  layout:2:padding:* * * *;vertical-align:middle;   Middle align
+  layout:3:padding:* * * *;vertical-align:bottom;   Bottom align
+
+COMBINED:
+cell:A1:t:Top Left:cf:1:l:1
+cellformat:1:left
+layout:1:padding:* * * *;vertical-align:top;
+
+## VALIDATION RULES
+
+1. version:1.5 MUST be first line
+2. Definition lines (font, color, border, layout, cellformat, valueformat) must exist before being referenced
+3. Cell coordinates must be valid (A-ZZ, 1-9999)
+4. Border attributes use 0 for no border, or reference number for border:<num>
+5. In formulas within cell lines, escape range colon: A1\cB5 not A1:B5
+6. Sheet must define c:<cols> and r:<rows> as minimum
+7. Colspan/rowspan creates merged cells - referenced cells should be empty
+8. Color format: rgb(0-255,0-255,0-255) or #RRGGBB
+9. Font size: number+unit (pt/px) or keyword (small/medium/large/x-large)
+10. Padding: number+px or * for default
+
+## REFERENCE RESOLUTION ORDER
+
+1. Parse version line
+2. Parse all definition lines (font, color, border, layout, cellformat, valueformat)
+3. Parse sheet line (can reference definitions)
+4. Parse cell lines (can reference definitions and other cells via formulas)
+5. Parse col/row lines
+6. Parse name lines
+
+## MINIMAL VALID FILE
+
+version:1.5
+cell:A1:t:Hello
+sheet:c:1:r:1
+
+## TYPICAL STRUCTURE
+
+version:1.5
+
+# Cell data
+cell:A1:t:Header:f:1:cf:2:b:1:1:1:1
+cell:A2:v:100:ntvf:1
+cell:A3:vtf:n:200:A2*2
+
+# Sheet properties
+sheet:c:1:r:3
+
+# Definitions
+font:1:normal bold 14pt Arial
+cellformat:2:center
+border:1:1px solid rgb(0,0,0)
+valueformat:1:#,##0.00
+
+# Important Note:
+1.Always start creating the sheet from Cell B2, leaving the first row and first column empty for margins and also resize the first column to width=10 by default
+2.Make sure the Layout doesn't break and is in the correct format as mentioned in the syntax
+3.Sometimes changing cell font size, padding affects its column width and row height, so if your are creating a heading or logo or some cell with large content merging multiple cells are ideal (either in a row, col or grid)
+4.when using <svg> or <img> for embedding html tags in a cell, make sure that that the text format of that particular cell is set to HTML.

@@ -2,10 +2,10 @@
  * Cell Value Extractor Utility
  * 
  * This utility extracts cell values from the active SocialCalc spreadsheet
- * and maps them to the template's cell mapping structure.
+ * and maps them to the template's AppMapping structure.
  */
 
-import { CellMapping, ItemsConfig, NestedField } from "../templates";
+import { AppMappingItem } from "../types/template";
 
 /**
  * Get cell content from SocialCalc spreadsheet
@@ -51,61 +51,65 @@ function getCurrentSheetObject(): any {
 }
 
 /**
- * Extract values for nested field mappings (e.g., From, BillTo)
+ * Extract values for nested form mappings
  */
-function extractNestedFieldValues(
+function extractFormValues(
     sheetObj: any,
-    nestedMapping: NestedField
+    formContent: { [key: string]: AppMappingItem }
 ): { [key: string]: any } {
     const values: { [key: string]: any } = {};
 
-    for (const key in nestedMapping) {
-        const value = nestedMapping[key];
+    for (const key in formContent) {
+        const item = formContent[key];
 
-        if (typeof value === "string") {
-            // Simple cell address
-            values[key] = getCellContent(sheetObj, value);
-        } else if (typeof value === "object") {
-            // Nested object - recurse
-            values[key] = extractNestedFieldValues(sheetObj, value as NestedField);
+        if (item.type === 'text' && item.cell) {
+            values[key] = getCellContent(sheetObj, item.cell);
+        } else if (item.type === 'form' && item.formContent) {
+            values[key] = extractFormValues(sheetObj, item.formContent);
         }
     }
 
     return values;
 }
 
+
 /**
- * Extract values for Items (line items with rows and columns)
+ * Extract values for Table items
  */
-function extractItemsValues(
+function extractTableValues(
     sheetObj: any,
-    itemsConfig: ItemsConfig
+    item: AppMappingItem
 ): Array<{ [columnName: string]: string }> {
     const items: Array<{ [columnName: string]: string }> = [];
 
-    const { Rows, Columns } = itemsConfig;
-    const startRow = Rows.start;
-    const endRow = Rows.end;
+    if (!item.rows || !item.col) return items;
+
+    const startRow = item.rows.start;
+    const endRow = item.rows.end;
 
     for (let row = startRow; row <= endRow; row++) {
-        const item: { [columnName: string]: string } = {};
+        const tableRow: { [columnName: string]: string } = {};
         let hasContent = false;
 
-        for (const columnName in Columns) {
-            const columnLetter = Columns[columnName];
-            const cellAddress = `${columnLetter}${row}`;
-            const value = getCellContent(sheetObj, cellAddress);
+        for (const colKey in item.col) {
+            const colItem = item.col[colKey];
+            // Table columns usually 'text' type with 'cell' indicating column letter
+            if (colItem.cell) {
+                const columnLetter = colItem.cell;
+                const cellAddress = `${columnLetter}${row}`;
+                const value = getCellContent(sheetObj, cellAddress);
 
-            item[columnName] = value;
+                tableRow[colKey] = value;
 
-            if (value && value.trim() !== "") {
-                hasContent = true;
+                if (value && value.trim() !== "") {
+                    hasContent = true;
+                }
             }
         }
 
         // Only include rows that have some content
         if (hasContent) {
-            items.push(item);
+            items.push(tableRow);
         }
     }
 
@@ -113,13 +117,11 @@ function extractItemsValues(
 }
 
 /**
- * Extract all cell values from the active spreadsheet based on cell mappings
- * 
- * @param cellMappings - The cell mapping structure from template
- * @returns Object mapping cell addresses to their values
+ * Extract all cell values from the active spreadsheet based on app mapping
+ * Returns flattened map of cell address -> value
  */
 export function extractCellValues(
-    cellMappings: { [sheetName: string]: CellMapping }
+    appMapping: { [sheetName: string]: { [key: string]: AppMappingItem } }
 ): { [cellAddress: string]: string } {
     const cellValues: { [cellAddress: string]: string } = {};
     const sheetObj = getCurrentSheetObject();
@@ -129,64 +131,29 @@ export function extractCellValues(
         return cellValues;
     }
 
-    // Process each sheet in the cell mappings
-    for (const sheetName in cellMappings) {
-        const sheetMapping = cellMappings[sheetName];
+    // Process each sheet
+    for (const sheetName in appMapping) {
+        const sheetMapping = appMapping[sheetName];
 
-        // Process each field in the sheet mapping
-        for (const fieldName in sheetMapping) {
-            const fieldValue = sheetMapping[fieldName];
-
-            if (typeof fieldValue === "string") {
-                // Simple cell address mapping
-                const cellAddress = fieldValue;
-                cellValues[cellAddress] = getCellContent(sheetObj, cellAddress);
-            } else if (typeof fieldValue === "object") {
-                // Check if it's an Items config
-                const potentialItems = fieldValue as any;
-                if (
-                    potentialItems.Rows &&
-                    potentialItems.Columns &&
-                    typeof potentialItems.Rows === "object" &&
-                    typeof potentialItems.Columns === "object"
-                ) {
-                    // This is an Items configuration
-                    const itemsConfig = fieldValue as ItemsConfig;
-                    const { Rows, Columns } = itemsConfig;
-
-                    // Extract all cells in the item range
-                    for (let row = Rows.start; row <= Rows.end; row++) {
-                        for (const columnName in Columns) {
-                            const columnLetter = Columns[columnName];
-                            const cellAddress = `${columnLetter}${row}`;
-                            cellValues[cellAddress] = getCellContent(sheetObj, cellAddress);
+        // Recursive helper to flatten values
+        const processItem = (item: AppMappingItem) => {
+            if (item.type === 'text' && item.cell) {
+                cellValues[item.cell] = getCellContent(sheetObj, item.cell);
+            } else if (item.type === 'form' && item.formContent) {
+                Object.values(item.formContent).forEach(subItem => processItem(subItem));
+            } else if (item.type === 'table' && item.rows && item.col) {
+                for (let row = item.rows.start; row <= item.rows.end; row++) {
+                    Object.values(item.col).forEach(colItem => {
+                        if (colItem.cell) {
+                            const cellAddr = `${colItem.cell}${row}`;
+                            cellValues[cellAddr] = getCellContent(sheetObj, cellAddr);
                         }
-                    }
-                } else {
-                    // This is a nested field (like From, BillTo)
-                    const nestedValues = extractNestedFieldValues(
-                        sheetObj,
-                        fieldValue as NestedField
-                    );
-
-                    // Flatten nested values to cell addresses
-                    const flattenNested = (obj: any, mapping: any): void => {
-                        for (const key in obj) {
-                            const value = obj[key];
-                            const mappingValue = mapping[key];
-
-                            if (typeof mappingValue === "string") {
-                                cellValues[mappingValue] = value;
-                            } else if (typeof mappingValue === "object") {
-                                flattenNested(value, mappingValue);
-                            }
-                        }
-                    };
-
-                    flattenNested(nestedValues, fieldValue);
+                    });
                 }
             }
-        }
+        };
+
+        Object.values(sheetMapping).forEach(item => processItem(item));
     }
 
     return cellValues;
@@ -194,12 +161,9 @@ export function extractCellValues(
 
 /**
  * Extract cell values in a structured format (preserving nesting)
- * 
- * @param cellMappings - The cell mapping structure from template
- * @returns Structured object with cell values
  */
 export function extractStructuredCellValues(
-    cellMappings: { [sheetName: string]: CellMapping }
+    appMapping: { [sheetName: string]: { [key: string]: AppMappingItem } }
 ): { [sheetName: string]: any } {
     const structuredValues: { [sheetName: string]: any } = {};
     const sheetObj = getCurrentSheetObject();
@@ -209,44 +173,21 @@ export function extractStructuredCellValues(
         return structuredValues;
     }
 
-    // Process each sheet in the cell mappings
-    for (const sheetName in cellMappings) {
+    for (const sheetName in appMapping) {
         structuredValues[sheetName] = {};
-        const sheetMapping = cellMappings[sheetName];
+        const sheetMapping = appMapping[sheetName];
 
-        // Process each field in the sheet mapping
-        for (const fieldName in sheetMapping) {
-            const fieldValue = sheetMapping[fieldName];
+        for (const key in sheetMapping) {
+            const item = sheetMapping[key];
 
-            if (typeof fieldValue === "string") {
-                // Simple cell address mapping
-                structuredValues[sheetName][fieldName] = getCellContent(
-                    sheetObj,
-                    fieldValue
-                );
-            } else if (typeof fieldValue === "object") {
-                // Check if it's an Items config
-                const potentialItems = fieldValue as any;
-                if (
-                    potentialItems.Rows &&
-                    potentialItems.Columns &&
-                    typeof potentialItems.Rows === "object" &&
-                    typeof potentialItems.Columns === "object"
-                ) {
-                    // This is an Items configuration
-                    const itemsConfig = fieldValue as ItemsConfig;
-                    structuredValues[sheetName][fieldName] = extractItemsValues(
-                        sheetObj,
-                        itemsConfig
-                    );
-                } else {
-                    // This is a nested field (like From, BillTo)
-                    structuredValues[sheetName][fieldName] = extractNestedFieldValues(
-                        sheetObj,
-                        fieldValue as NestedField
-                    );
-                }
+            if (item.type === 'text' && item.cell) {
+                structuredValues[sheetName][key] = getCellContent(sheetObj, item.cell);
+            } else if (item.type === 'form' && item.formContent) {
+                structuredValues[sheetName][key] = extractFormValues(sheetObj, item.formContent);
+            } else if (item.type === 'table') {
+                structuredValues[sheetName][key] = extractTableValues(sheetObj, item);
             }
+            // Images usually don't have extractable content relevant here
         }
     }
 

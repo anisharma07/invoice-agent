@@ -148,3 +148,4 @@ log/
 *.bak
 *.backup
 .cache
+.vercel

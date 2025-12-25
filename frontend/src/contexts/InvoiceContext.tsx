@@ -6,17 +6,18 @@ import React, {
   ReactNode,
 } from "react";
 import { Local } from "../components/Storage/LocalStorage";
-import { TemplateData, DATA } from "../templates";
+import { TemplateData } from "../types/template";
 
 interface InvoiceContextType {
   selectedFile: string;
   billType: number;
   store: Local;
   activeTemplateData: TemplateData | null;
+  activeTemplateId: number | string | null;
   currentSheetId: string | null;
   updateSelectedFile: (fileName: string) => void;
   updateBillType: (type: number) => void;
-  updateActiveTemplateData: (templateData: TemplateData | null) => void;
+  updateActiveTemplateData: (templateData: TemplateData | null, templateId?: number | string) => void;
   updateCurrentSheetId: (sheetId: string) => void;
   resetToDefaults: () => void;
 }
@@ -42,6 +43,7 @@ export const InvoiceProvider: React.FC<InvoiceProviderProps> = ({
   const [billType, setBillType] = useState<number>(1);
   const [activeTemplateData, setActiveTemplateData] =
     useState<TemplateData | null>(null);
+  const [activeTemplateId, setActiveTemplateId] = useState<number | string | null>(null);
   const [currentSheetId, setCurrentSheetId] = useState<string | null>(null);
   const [store] = useState(() => new Local());
 
@@ -66,15 +68,11 @@ export const InvoiceProvider: React.FC<InvoiceProviderProps> = ({
       }
 
       if (savedActiveTemplateId) {
-        const templateId = parseInt(savedActiveTemplateId, 10);
-        const templateData = DATA[templateId];
-        if (templateData) {
-          setActiveTemplateData(templateData);
-          // Set current sheet ID from template data if not saved separately
-          if (!savedCurrentSheetId && templateData.msc.currentid) {
-            setCurrentSheetId(templateData.msc.currentid);
-          }
-        }
+        // For string IDs (filenames) or numbers
+        const templateId = isNaN(Number(savedActiveTemplateId)) ? savedActiveTemplateId : Number(savedActiveTemplateId);
+        setActiveTemplateId(templateId);
+        // Note: Template data is no longer synchronously loaded from local DATA.
+        // Components must fetch data if needed based on activeTemplateId.
       }
 
       if (savedCurrentSheetId) {
@@ -104,10 +102,10 @@ export const InvoiceProvider: React.FC<InvoiceProviderProps> = ({
 
   useEffect(() => {
     try {
-      if (activeTemplateData) {
+      if (activeTemplateId) {
         localStorage.setItem(
           "stark-invoice-active-template-id",
-          activeTemplateData.templateId.toString()
+          activeTemplateId.toString()
         );
       } else {
         localStorage.removeItem("stark-invoice-active-template-id");
@@ -115,7 +113,7 @@ export const InvoiceProvider: React.FC<InvoiceProviderProps> = ({
     } catch (error) {
       // Failed to save active template id to localStorage
     }
-  }, [activeTemplateData]);
+  }, [activeTemplateId]);
 
   useEffect(() => {
     try {
@@ -137,8 +135,9 @@ export const InvoiceProvider: React.FC<InvoiceProviderProps> = ({
     setBillType(type);
   };
 
-  const updateActiveTemplateData = (templateData: TemplateData | null) => {
+  const updateActiveTemplateData = (templateData: TemplateData | null, templateId?: number | string) => {
     setActiveTemplateData(templateData);
+    if (templateId) setActiveTemplateId(templateId);
     // Automatically update current sheet ID when template changes
     if (templateData && templateData.msc.currentid) {
       setCurrentSheetId(templateData.msc.currentid);
@@ -153,6 +152,7 @@ export const InvoiceProvider: React.FC<InvoiceProviderProps> = ({
     setSelectedFile("File_Not_found");
     setBillType(1);
     setActiveTemplateData(null);
+    setActiveTemplateId(null);
     setCurrentSheetId(null);
   };
 
@@ -161,6 +161,7 @@ export const InvoiceProvider: React.FC<InvoiceProviderProps> = ({
     billType,
     store,
     activeTemplateData,
+    activeTemplateId,
     currentSheetId,
     updateSelectedFile,
     updateBillType,

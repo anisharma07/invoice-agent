@@ -10,7 +10,7 @@
     border-left: 1px solid var(--ion-border-color, #ddd);
     display: flex;
     flex-direction: column;
-    z-index: 999;
+    z-index: 20000;
     box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
     animation: slideIn 0.3s ease-out;
 }
@@ -26,7 +26,12 @@
 }
 
 .sidebar-header {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    background: var(--ion-background-color);
+}
+
+.sidebar-header ion-toolbar {
+    --border-style: none;
+    --background: transparent;
 }
 
 .header-icon {
@@ -36,9 +41,9 @@
 }
 
 .status-bar {
-    padding: 8px 12px;
+    padding: 6px 16px;
     background: var(--ion-color-light);
-    border-top: 1px solid var(--ion-border-color, #ddd);
+    border-bottom: 1px solid var(--ion-border-color, #ddd);
     display: flex;
     gap: 8px;
     align-items: center;
@@ -47,8 +52,157 @@
 
 .status-bar ion-chip {
     margin: 0;
-    height: 28px;
-    font-size: 12px;
+    height: 24px;
+    font-size: 11px;
+}
+
+/* Custom Tab Styles */
+.invoice-editing-sidebar .custom-tabs {
+    display: flex;
+    width: 100%;
+    background: transparent;
+    padding: 12px 16px;
+    gap: 12px;
+    border-bottom: none;
+    margin-bottom: 0;
+    align-items: center;
+}
+
+.close-btn-custom {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 20px;
+    color: var(--ion-color-medium);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.close-btn-custom:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--ion-color-dark);
+}
+
+.tab-button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ion-color-medium);
+    transition: all 0.2s ease;
+    border: 1px solid var(--ion-border-color, #ddd);
+    border-radius: 8px;
+    background: var(--ion-color-light);
+    height: 38px;
+    white-space: nowrap;
+}
+
+.tab-close-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    cursor: pointer;
+    border-radius: 8px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    flex-shrink: 0;
+}
+
+.tab-close-button:hover {
+    background: #dc2626;
+    color: white;
+    border-color: #dc2626;
+}
+
+.tab-button:hover {
+    background: var(--ion-color-step-50, #f2f2f2);
+}
+
+.tab-button.active {
+    color: var(--ion-color-primary-contrast, #fff);
+    background: var(--ion-color-primary);
+    border-color: var(--ion-color-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tab-button ion-icon {
+    font-size: 18px;
+}
+
+
+/* Manual Form Container */
+.manual-form-container {
+    padding: 8px 12px;
+}
+
+.sidebar-card {
+    margin: 8px 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.sidebar-card ion-card-header {
+    padding: 10px 14px;
+}
+
+.sidebar-card ion-card-title {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.sidebar-card ion-card-content {
+    padding: 8px;
+}
+
+.sidebar-card ion-item {
+    --padding-start: 8px;
+    --padding-end: 8px;
+    --inner-padding-end: 0;
+    font-size: 13px;
+}
+
+.sidebar-card ion-label {
+    font-size: 12px !important;
+}
+
+.sidebar-card ion-input,
+.sidebar-card ion-textarea {
+    font-size: 13px !important;
+}
+
+.item-group {
+    margin-bottom: 8px;
+    background: var(--ion-color-light);
+    border-radius: 8px;
+    padding: 4px;
+}
+
+/* Manual Actions Footer */
+.manual-actions {
+    border-top: 1px solid var(--ion-border-color, #e0e0e0);
+    padding: 16px;
+    background: var(--ion-background-color);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.manual-secondary-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    justify-content: center;
 }
 
 .sidebar-content {

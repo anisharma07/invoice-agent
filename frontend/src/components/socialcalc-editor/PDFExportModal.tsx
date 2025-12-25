@@ -16,15 +16,35 @@ export interface PDFSettings {
   includeGridlines: boolean;
   printRange: 'current' | 'all' | 'selection';
   customRange?: string;
+  // Header/Footer settings
+  header: {
+    left: string;
+    center: string;
+    right: string;
+  };
+  footer: {
+    left: string;
+    center: string;
+    right: string;
+  };
+  // Header/Footer toggles
+  showPageNumbers: boolean;
+  showSheetName: boolean;
+  showWorkbookTitle: boolean;
+  showCurrentDate: boolean;
+  showCurrentTime: boolean;
 }
 
 interface PDFExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onExport: (settings: PDFSettings) => Promise<void>;
+  onSaveSettings?: (settings: PDFSettings) => Promise<void>;
+  initialSettings?: PDFSettings;
   sheetData: string | null;
   isGenerating: boolean;
   getSheetHTML?: () => string | null;
+  templateName?: string;
 }
 
 const DEFAULT_SETTINGS: PDFSettings = {
@@ -40,21 +60,48 @@ const DEFAULT_SETTINGS: PDFSettings = {
   fitToPage: false,
   includeGridlines: false,
   printRange: 'current',
+  header: {
+    left: '',
+    center: '',
+    right: '',
+  },
+  footer: {
+    left: '',
+    center: '',
+    right: '',
+  },
+  showPageNumbers: true,
+  showSheetName: true,
+  showWorkbookTitle: false,
+  showCurrentDate: true,
+  showCurrentTime: false,
 };
 
 export const PDFExportModal: React.FC<PDFExportModalProps> = ({
   isOpen,
   onClose,
   onExport,
+  onSaveSettings,
+  initialSettings,
   sheetData,
   isGenerating,
   getSheetHTML,
+  templateName = 'Document',
 }) => {
-  const [settings, setSettings] = useState<PDFSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<PDFSettings>(initialSettings || DEFAULT_SETTINGS);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [zoom, setZoom] = useState(100);
   const [currentPdfBase64, setCurrentPdfBase64] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showJsonPreview, setShowJsonPreview] = useState(false);
+
+  // Update settings when initialSettings changes
+  useEffect(() => {
+    if (initialSettings) {
+      setSettings(initialSettings);
+    }
+  }, [initialSettings]);
 
   // Generate PDF preview from backend only when modal opens (initial load)
   useEffect(() => {
@@ -130,12 +177,13 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({
 
   useEffect(() => {
     if (!isOpen) {
-      setSettings(DEFAULT_SETTINGS);
+      // Reset logic: if initialSettings exist, revert to them, else default
+      setSettings(initialSettings || DEFAULT_SETTINGS);
       setZoom(100);
       setPdfPreviewUrl(null);
       setCurrentPdfBase64(null);
     }
-  }, [isOpen]);
+  }, [isOpen, initialSettings]);
 
   const handleSettingChange = useCallback(
     <K extends keyof PDFSettings>(key: K, value: PDFSettings[K]) => {
@@ -159,6 +207,43 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({
     },
     []
   );
+
+  const handleHeaderChange = useCallback(
+    (position: 'left' | 'center' | 'right', value: string) => {
+      setSettings((prev) => ({
+        ...prev,
+        header: {
+          ...prev.header,
+          [position]: value,
+        },
+      }));
+    },
+    []
+  );
+
+  const handleFooterChange = useCallback(
+    (position: 'left' | 'center' | 'right', value: string) => {
+      setSettings((prev) => ({
+        ...prev,
+        footer: {
+          ...prev.footer,
+          [position]: value,
+        },
+      }));
+    },
+    []
+  );
+
+  const handleSaveToTemplate = async () => {
+    if (onSaveSettings) {
+      setIsSaving(true);
+      try {
+        await onSaveSettings(settings);
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
 
   const handleDownload = useCallback(() => {
     if (!currentPdfBase64) {
@@ -203,6 +288,16 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({
         <div className="pdf-modal-header">
           <h2>Export PDF</h2>
           <div className="pdf-header-actions">
+            {onSaveSettings && (
+              <button
+                className="pdf-btn-secondary"
+                onClick={handleSaveToTemplate}
+                disabled={isSaving}
+                style={{ marginRight: '10px' }}
+              >
+                {isSaving ? 'Saving...' : 'Save to Template'}
+              </button>
+            )}
             <button
               className="pdf-btn-primary"
               onClick={handleDownload}
@@ -432,6 +527,161 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({
               <button className="pdf-btn-link" onClick={() => handleSettingChange('margins', { top: 10, right: 10, bottom: 10, left: 10 })}>
                 Reset to Normal
               </button>
+            </div>
+
+            {/* Headers & Footers Section */}
+            <div className="pdf-setting-section">
+              <h3>Headers & Footers</h3>
+
+              {/* Toggle Options */}
+              <div className="pdf-control-group" style={{ marginBottom: '16px' }}>
+                <label className="pdf-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={settings.showPageNumbers}
+                    onChange={(e) => handleSettingChange('showPageNumbers', e.target.checked)}
+                  />
+                  <span>Page numbers</span>
+                </label>
+                <label className="pdf-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={settings.showSheetName}
+                    onChange={(e) => handleSettingChange('showSheetName', e.target.checked)}
+                  />
+                  <span>Sheet name</span>
+                </label>
+                <label className="pdf-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={settings.showWorkbookTitle}
+                    onChange={(e) => handleSettingChange('showWorkbookTitle', e.target.checked)}
+                  />
+                  <span>Workbook title</span>
+                </label>
+                <label className="pdf-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={settings.showCurrentDate}
+                    onChange={(e) => handleSettingChange('showCurrentDate', e.target.checked)}
+                  />
+                  <span>Current date</span>
+                </label>
+                <label className="pdf-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={settings.showCurrentTime}
+                    onChange={(e) => handleSettingChange('showCurrentTime', e.target.checked)}
+                  />
+                  <span>Current time</span>
+                </label>
+              </div>
+
+              {/* Header Inputs */}
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: '600', marginBottom: '6px', display: 'block' }}>Header</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                  <input
+                    type="text"
+                    placeholder="Left"
+                    value={settings.header.left}
+                    onChange={(e) => handleHeaderChange('left', e.target.value)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    style={{ padding: '6px 10px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '4px' }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Center"
+                    value={settings.header.center}
+                    onChange={(e) => handleHeaderChange('center', e.target.value)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    style={{ padding: '6px 10px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '4px' }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Right"
+                    value={settings.header.right}
+                    onChange={(e) => handleHeaderChange('right', e.target.value)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    style={{ padding: '6px 10px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '4px' }}
+                  />
+                </div>
+              </div>
+
+              {/* Footer Inputs */}
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '600', marginBottom: '6px', display: 'block' }}>Footer</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                  <input
+                    type="text"
+                    placeholder="Left"
+                    value={settings.footer.left}
+                    onChange={(e) => handleFooterChange('left', e.target.value)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    style={{ padding: '6px 10px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '4px' }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Center"
+                    value={settings.footer.center}
+                    onChange={(e) => handleFooterChange('center', e.target.value)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    style={{ padding: '6px 10px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '4px' }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Right"
+                    value={settings.footer.right}
+                    onChange={(e) => handleFooterChange('right', e.target.value)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    style={{ padding: '6px 10px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '4px' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* JSON Preview Section */}
+            <div className="pdf-setting-section">
+              <div
+                onClick={() => setShowJsonPreview(!showJsonPreview)}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                <h3 style={{ margin: 0 }}>Export Options JSON</h3>
+                <span style={{ fontSize: '12px', color: '#666' }}>{showJsonPreview ? '▲' : '▼'}</span>
+              </div>
+              {showJsonPreview && (
+                <div style={{ marginTop: '12px' }}>
+                  <pre style={{
+                    background: '#f5f5f5',
+                    border: '1px solid #ddd',
+                    borderRadius: '6px',
+                    padding: '12px',
+                    fontSize: '11px',
+                    overflow: 'auto',
+                    maxHeight: '200px',
+                    margin: 0,
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-all'
+                  }}>
+                    {JSON.stringify(settings, null, 2)}
+                  </pre>
+                  <button
+                    className="pdf-btn-link"
+                    onClick={() => {
+                      navigator.clipboard.writeText(JSON.stringify(settings, null, 2));
+                      alert('JSON copied to clipboard!');
+                    }}
+                    style={{ marginTop: '8px' }}
+                  >
+                    Copy JSON
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Apply Changes Button */}

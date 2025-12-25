@@ -1,12 +1,8 @@
 /**
- * Utility functions to generate EditableCells configuration from cell mappings
+ * Utility functions to generate EditableCells configuration from AppMapping
  */
 
-interface CellMappings {
-    [sheetId: string]: {
-        [key: string]: any;
-    };
-}
+import { AppMappingItem } from '../types/template';
 
 interface EditableCells {
     allow: boolean;
@@ -23,64 +19,54 @@ interface EditableCellsConfig {
 }
 
 /**
- * Recursively extracts all cell references from a nested object structure
- * @param obj - The object to extract cell references from (e.g., cellMappings for a sheet)
- * @param cellRefs - Accumulator array for cell references
- * @param path - Current path in the object (for debugging/context)
+ * Recursively extracts all cell references from AppMapping structure
  */
 const extractCellReferences = (
     obj: any,
-    cellRefs: string[] = [],
-    path: string = ''
+    cellRefs: string[] = []
 ): string[] => {
-    if (typeof obj === 'string') {
-        // Check if it's a valid cell reference (e.g., "A1", "B2", "C12")
-        // Cell references are typically 1-3 letters followed by 1-5 digits
-        if (/^[A-Z]{1,3}\d{1,5}$/.test(obj)) {
-            cellRefs.push(obj);
-        }
-    } else if (typeof obj === 'object' && obj !== null) {
-        // Handle special case: Items with Rows and Columns
-        if (obj.Rows && obj.Columns) {
-            const { start, end } = obj.Rows;
-            const columns = obj.Columns;
+    if (!obj || typeof obj !== 'object') return cellRefs;
 
-            // Generate cell references for each row and column combination
-            for (let row = start; row <= end; row++) {
-                for (const [columnKey, columnLetter] of Object.entries(columns)) {
-                    if (typeof columnLetter === 'string' && /^[A-Z]{1,3}$/.test(columnLetter)) {
+    // Check if current object looks like an AppMappingItem with a cell
+    if (obj.cell && typeof obj.cell === 'string' && /^[A-Z]{1,3}\d{1,5}$/.test(obj.cell)) {
+        cellRefs.push(obj.cell);
+    }
+
+    // Handle Table type (rows & col)
+    if (obj.type === 'table' && obj.rows && obj.col) {
+        const { start, end } = obj.rows;
+        const columns = obj.col; // Map of key -> AppMappingItem
+
+        for (let row = start; row <= end; row++) {
+            Object.values(columns).forEach((colItem: any) => {
+                // colItem is AppMappingItem, should have 'cell' for column letter
+                if (colItem.cell && typeof colItem.cell === 'string') {
+                    const columnLetter = colItem.cell;
+                    // Validate column letter (A-ZZZ)
+                    if (/^[A-Z]{1,3}$/.test(columnLetter)) {
                         cellRefs.push(`${columnLetter}${row}`);
                     }
                 }
-            }
-        } else {
-            // Recursively process nested objects
-            for (const [key, value] of Object.entries(obj)) {
-                // Skip metadata keys that aren't cell references
-                if (!['Name', 'Heading', 'Subheading', 'Rows', 'Columns'].includes(key)) {
-                    extractCellReferences(value, cellRefs, path ? `${path}.${key}` : key);
-                } else if (key === 'Rows' || key === 'Columns') {
-                    // Skip these as they're handled above
-                    continue;
-                } else {
-                    // For Name, Heading, Subheading, check if they contain cell refs
-                    extractCellReferences(value, cellRefs, path ? `${path}.${key}` : key);
-                }
-            }
+            });
         }
     }
+
+    // Recurse into nested objects (formContent, or values of the object)
+    // We iterate keys to find nested AppMappingItems
+    Object.values(obj).forEach(val => {
+        if (typeof val === 'object' && val !== null) {
+            extractCellReferences(val, cellRefs);
+        }
+    });
 
     return cellRefs;
 };
 
 /**
- * Generates EditableCells configuration from cell mappings
- * @param cellMappings - The cell mappings object containing sheet-level mappings
- * @param options - Optional configuration
- * @returns EditableCells configuration for all sheets
+ * Generates EditableCells configuration from app mapping
  */
 export const generateEditableCells = (
-    cellMappings: CellMappings,
+    appMapping: { [sheetId: string]: any }, // AppMapping
     options: {
         allowByDefault?: boolean;
         sheetNamePrefix?: string;
@@ -88,15 +74,14 @@ export const generateEditableCells = (
 ): EditableCellsConfig => {
     const {
         allowByDefault = true,
-        sheetNamePrefix = 'sheet1',
     } = options;
 
     const editableCellsConfig: EditableCellsConfig = {};
 
     // Process each sheet
-    for (const [sheetId, sheetMappings] of Object.entries(cellMappings)) {
+    for (const [sheetId, sheetMapping] of Object.entries(appMapping)) {
         // Extract all cell references from the sheet mappings
-        const cellRefs = extractCellReferences(sheetMappings);
+        const cellRefs = extractCellReferences(sheetMapping);
 
         // Remove duplicates
         const uniqueCellRefs = [...new Set(cellRefs)];
@@ -123,12 +108,9 @@ export const generateEditableCells = (
 
 /**
  * Generates EditableCells configuration for a single sheet
- * @param sheetMappings - The cell mappings for a single sheet
- * @param options - Optional configuration
- * @returns EditableCells configuration
  */
 export const generateEditableCellsForSheet = (
-    sheetMappings: any,
+    sheetMapping: any,
     options: {
         allowByDefault?: boolean;
         sheetName?: string;
@@ -139,17 +121,12 @@ export const generateEditableCellsForSheet = (
         sheetName = 'sheet1',
     } = options;
 
-    // Extract all cell references from the sheet mappings
-    const cellRefs = extractCellReferences(sheetMappings);
-
-    // Remove duplicates
+    const cellRefs = extractCellReferences(sheetMapping);
     const uniqueCellRefs = [...new Set(cellRefs)];
 
-    // Build the cells configuration with sheet prefix
     const cells: EditableCells['cells'] = {};
 
     uniqueCellRefs.forEach((cellRef) => {
-        // Format: "sheetName!A1": true
         const prefixedCellRef = `${sheetName}!${cellRef}`;
         cells[prefixedCellRef] = allowByDefault;
     });
@@ -163,8 +140,6 @@ export const generateEditableCellsForSheet = (
 
 /**
  * Merges multiple EditableCells configurations
- * @param configs - Array of EditableCells configurations to merge
- * @returns Merged EditableCells configuration
  */
 export const mergeEditableCells = (...configs: EditableCells[]): EditableCells => {
     const merged: EditableCells = {
@@ -174,13 +149,8 @@ export const mergeEditableCells = (...configs: EditableCells[]): EditableCells =
     };
 
     configs.forEach((config) => {
-        // Merge cells
         Object.assign(merged.cells, config.cells);
-
-        // Merge constraints
         Object.assign(merged.constraints, config.constraints);
-
-        // If any config disallows editing, set allow to false
         if (!config.allow) {
             merged.allow = false;
         }
@@ -191,10 +161,6 @@ export const mergeEditableCells = (...configs: EditableCells[]): EditableCells =
 
 /**
  * Adds specific cells to an existing EditableCells configuration
- * @param editableCells - Existing EditableCells configuration
- * @param cellRefs - Array of cell references to add (can be prefixed with sheet name or not)
- * @param options - Optional cell configuration
- * @returns Updated EditableCells configuration
  */
 export const addEditableCells = (
     editableCells: EditableCells,
@@ -207,7 +173,6 @@ export const addEditableCells = (
     const { allow = true, sheetName = 'sheet1' } = options;
 
     cellRefs.forEach((cellRef) => {
-        // If cellRef doesn't contain "!", add sheet prefix
         const prefixedCellRef = cellRef.includes('!') ? cellRef : `${sheetName}!${cellRef}`;
         editableCells.cells[prefixedCellRef] = allow;
     });
@@ -217,9 +182,6 @@ export const addEditableCells = (
 
 /**
  * Removes specific cells from an EditableCells configuration
- * @param editableCells - Existing EditableCells configuration
- * @param cellRefs - Array of cell references to remove
- * @returns Updated EditableCells configuration
  */
 export const removeEditableCells = (
     editableCells: EditableCells,
@@ -234,8 +196,6 @@ export const removeEditableCells = (
 
 /**
  * Gets all editable cell references from an EditableCells configuration
- * @param editableCells - EditableCells configuration
- * @returns Array of cell references that are editable (with sheet prefix)
  */
 export const getEditableCellRefs = (editableCells: EditableCells): string[] => {
     return Object.entries(editableCells.cells)
@@ -245,8 +205,6 @@ export const getEditableCellRefs = (editableCells: EditableCells): string[] => {
 
 /**
  * Validates if a cell reference is in the correct format
- * @param cellRef - Cell reference to validate (e.g., "A1", "B2")
- * @returns True if valid, false otherwise
  */
 export const isValidCellReference = (cellRef: string): boolean => {
     return /^[A-Z]{1,3}\d{1,5}$/.test(cellRef);

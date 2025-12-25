@@ -645,6 +645,18 @@ ion-fab {
   right: 16px;
 }
 
+ion-fab-button {
+  --background-focused: transparent;
+  --background-activated: transparent;
+  --background-hover: transparent;
+  --ripple-color: transparent;
+}
+
+ion-fab-button::part(native) {
+  background: var(--ion-color-primary);
+  box-shadow: 0 4px 16px rgba(var(--ion-color-primary-rgb), 0.3);
+}
+
 ion-fab ion-fab-button {
   --box-shadow: 0 4px 16px rgba(var(--ion-color-primary-rgb), 0.3);
   --border-radius: 50%;

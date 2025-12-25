@@ -111,7 +111,7 @@ export const AIChat: React.FC<AIChatProps> = ({ onGenerate, isLoading }) => {
                     </form>
 
                     <div className="ai-chat-footer">
-                        <small>Created with love by StarCalc</small>
+                        <small>Created with love by Invoice Calc</small>
                     </div>
                 </div>
             )}
